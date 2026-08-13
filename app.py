@@ -4,6 +4,9 @@ import ssl
 import sqlite3
 import csv
 import io
+import urllib.request
+import urllib.parse
+import json
 from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -38,6 +41,8 @@ TWILIO_TOKEN     = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_FROM      = os.getenv("TWILIO_FROM", "")  # Either a Twilio phone number or your approved alphanumeric sender ID
 # Master switch for all SMS — set SMS_ENABLED=true in .env once Twilio is configured.
 SMS_ENABLED      = os.getenv("SMS_ENABLED", "false").strip().lower() in ("true", "1", "yes", "on")
+FB_VERIFY_TOKEN  = os.getenv("FACEBOOK_VERIFY_TOKEN", "")
+FB_PAGE_TOKEN    = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "")
 
 DB_PATH          = os.path.join(os.path.dirname(__file__), "leads.db")
 
@@ -406,6 +411,64 @@ print("─" * 60)
 
 @app.route("/health")
 def health():
+    return "OK", 200
+
+def _fb_field(field_data, *keys):
+    """Pull the first matching value from Facebook's field_data list."""
+    for field in field_data:
+        name = field.get("name", "").lower().replace(" ", "_")
+        for key in keys:
+            if key in name:
+                vals = field.get("values") or []
+                return vals[0] if vals else ""
+    return ""
+
+@app.route("/webhook/facebook", methods=["GET", "POST"])
+def facebook_webhook():
+    if request.method == "GET":
+        if request.args.get("hub.verify_token") == FB_VERIFY_TOKEN:
+            return request.args.get("hub.challenge", ""), 200
+        return "Forbidden", 403
+
+    payload = request.get_json(silent=True) or {}
+    print(f"FB webhook: {json.dumps(payload)}")
+
+    for entry in payload.get("entry", []):
+        for change in entry.get("changes", []):
+            if change.get("field") != "leadgen":
+                continue
+            leadgen_id = change.get("value", {}).get("leadgen_id")
+            if not leadgen_id or not FB_PAGE_TOKEN:
+                print("FB webhook: missing leadgen_id or page token")
+                continue
+
+            url = f"https://graph.facebook.com/v19.0/{leadgen_id}?access_token={FB_PAGE_TOKEN}"
+            try:
+                with urllib.request.urlopen(url) as resp:
+                    lead_data = json.loads(resp.read())
+            except Exception as e:
+                print(f"FB Graph API error: {e}")
+                continue
+
+            fd = lead_data.get("field_data", [])
+            name     = _fb_field(fd, "full_name", "name")
+            email    = _fb_field(fd, "email")
+            phone    = _fb_field(fd, "phone_number", "phone")
+            reg      = _fb_field(fd, "registration", "reg_", "vehicle_reg")
+            mileage  = _fb_field(fd, "mileage")
+            postcode = _fb_field(fd, "post_code", "postcode", "zip")
+            service  = _fb_field(fd, "service_history", "service", "history")
+
+            data = {
+                "name": name, "email": email, "phone": phone,
+                "car": "", "reg": reg.upper(), "mileage": mileage,
+                "postcode": postcode, "price": "",
+                "source": "Facebook",
+                "notes": f"Service history: {service}" if service else "",
+            }
+            save_lead(data, fu1_at=None, fu2_at=None, sms_at=None)
+            print(f"FB lead saved: {name} ({email}) — {reg}")
+
     return "OK", 200
 
 @app.route("/")
