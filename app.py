@@ -597,6 +597,5 @@ def templates_preview():
     return jsonify({"ok": True, "preview": rendered})
 
 if __name__ == "__main__":
-    # debug=False is more stable for long-running sessions and avoids the dev-server debugger noise.
-    # use_reloader=False prevents the scheduler from being started twice (which would double-send).
-    app.run(debug=False, use_reloader=False, host="127.0.0.1", port=5000)
+    port = int(os.getenv("PORT", 5000))
+    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=port)
