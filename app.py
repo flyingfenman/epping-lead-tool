@@ -404,6 +404,10 @@ print("─" * 60)
 
 # ── Routes ────────────────────────────────────────────────────────────────────
 
+@app.route("/health")
+def health():
+    return "OK", 200
+
 @app.route("/")
 def index():
     return render_template("index.html", your_name=YOUR_NAME, your_phone=YOUR_PHONE)
