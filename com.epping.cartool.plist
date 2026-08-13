@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.epping.cartool</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/henrythorogood/epping-sales-tool/.venv/bin/python</string>
+        <string>/Users/henrythorogood/Downloads/epping-lead-tool/app.py</string>
+    </array>
+    <key>WorkingDirectory</key>
+    <string>/Users/henrythorogood/Downloads/epping-lead-tool</string>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>120</integer>
+    <key>StandardOutPath</key>
+    <string>/Users/henrythorogood/Downloads/epping-lead-tool/tool.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/henrythorogood/Downloads/epping-lead-tool/tool.log</string>
+</dict>
+</plist>

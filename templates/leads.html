@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>All Leads — Epping Car Buyer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #F5F4F0; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem 4rem; }
+  .container { max-width: 960px; margin: 0 auto; }
+  header { margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  header p { font-size: 13px; color: #777; margin-top: 3px; }
+  .header-actions { display: flex; gap: 8px; }
+  a.btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 8px; border: 1px solid #E0DDD6; background: #fff; color: #333; text-decoration: none; cursor: pointer; }
+  a.btn:hover { background: #F5F4F0; }
+  a.btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  a.btn.primary:hover { background: #333; }
+  .card { background: #fff; border-radius: 14px; border: 1px solid #E8E6E0; padding: 1.25rem 1.5rem; margin-bottom: 12px; }
+  .empty { font-size: 14px; color: #aaa; text-align: center; padding: 3rem 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #999; padding: 0 12px 10px 0; border-bottom: 1px solid #EEECEA; }
+  td { padding: 10px 12px 10px 0; border-bottom: 0.5px solid #EEECEA; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; background: #F0EEE8; color: #666; }
+  .del-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #ef9a9a; background: transparent; color: #c62828; cursor: pointer; }
+  .del-btn:hover { background: #FFEBEE; }
+  .sell-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #a5d6a7; background: transparent; color: #2e7d32; cursor: pointer; margin-right: 6px; white-space: nowrap; }
+  .sell-btn:hover { background: #E8F5E9; }
+  .sell-btn.done { border-color: #E0DDD6; color: #999; background: #FAFAF8; cursor: default; }
+  .bought-badge { display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: #E8F5E9; color: #2e7d32; border: 1px solid #a5d6a7; margin-left: 6px; letter-spacing: 0.02em; }
+
+  /* List-for-sale modal */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: flex-start; justify-content: center; padding: 4vh 16px; overflow-y: auto; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: #fff; border-radius: 16px; padding: 1.5rem 1.75rem; max-width: 560px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+  .modal h2 { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; margin-bottom: 4px; }
+  .modal .sub { font-size: 13px; color: #777; margin-bottom: 16px; }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; margin-bottom: 12px; }
+  .modal-field label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #999; margin-bottom: 4px; }
+  .modal-field input, .modal-field textarea { font-family: 'DM Sans', sans-serif; font-size: 14px; width: 100%; padding: 8px 10px; border: 1px solid #E0DDD6; border-radius: 8px; background: #FAFAF8; color: #1a1a1a; }
+  .modal-field input:focus, .modal-field textarea:focus { outline: none; border-color: #1a1a1a; background: #fff; }
+  .modal-field.full { grid-column: 1 / -1; }
+  .modal-field textarea { min-height: 130px; resize: vertical; line-height: 1.5; }
+  .modal-hint { font-size: 12px; color: #999; margin-top: 4px; }
+  .modal-hint.autofilled { color: #2e7d32; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  .modal-actions button { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 18px; border-radius: 8px; cursor: pointer; }
+  .modal-cancel { border: 1px solid #E0DDD6; background: #fff; color: #333; }
+  .modal-cancel:hover { background: #F5F4F0; }
+  .modal-submit { border: 1px solid #2e7d32; background: #2e7d32; color: #fff; }
+  .modal-submit:hover { background: #1b5e20; }
+  .modal-submit:disabled { opacity: 0.6; cursor: default; }
+  .modal-error { display: none; font-size: 13px; color: #c62828; background: #FFEBEE; border: 1px solid #ef9a9a; border-radius: 8px; padding: 8px 12px; margin-top: 12px; }
+  .modal-error.show { display: block; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+  .stat { background: #fff; border-radius: 12px; border: 1px solid #E8E6E0; padding: 1rem 1.25rem; }
+  .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 600; }
+
+  /* Expandable rows */
+  tr.lead-row { cursor: pointer; transition: background-color 0.12s; }
+  tr.lead-row:hover { background: #FAFAF8; }
+  tr.lead-row.open { background: #F5F4F0; }
+  .chev { display: inline-block; width: 14px; color: #aaa; font-size: 10px; transition: transform 0.15s; }
+  tr.lead-row.open .chev { transform: rotate(90deg); color: #555; }
+  tr.details-row { display: none; }
+  tr.details-row.open { display: table-row; }
+  tr.details-row td {
+    background: #FAFAF8; border-top: none; padding: 0 0 0 0;
+  }
+  .details-inner {
+    padding: 16px 18px 18px 28px; border-left: 3px solid #1a1a1a; margin: 0 4px 4px 4px;
+    border-radius: 0 8px 8px 0; background: #fff; border-top: 1px solid #EEECEA;
+    border-right: 1px solid #EEECEA; border-bottom: 1px solid #EEECEA;
+  }
+  .details-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 24px;
+  }
+  .detail-item { font-size: 13px; }
+  .detail-label { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #999; margin-bottom: 3px; }
+  .detail-value { color: #1a1a1a; word-break: break-word; }
+  .detail-value.muted { color: #aaa; font-style: italic; }
+  .detail-value a { color: #1a56db; text-decoration: none; }
+  .detail-value a:hover { text-decoration: underline; }
+  .detail-section-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; color: #777; margin: 18px 0 10px 0; padding-bottom: 6px;
+    border-bottom: 1px solid #EEECEA;
+  }
+  .detail-section-title:first-child { margin-top: 0; }
+  .notes-box { background: #FAFAF8; border: 1px solid #EEECEA; border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #444; line-height: 1.55; white-space: pre-wrap; }
+  .notes-box.empty { color: #aaa; font-style: italic; }
+  .timeline-item { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 0; }
+  .timeline-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .timeline-dot.done { background: #2e7d32; }
+  .timeline-dot.scheduled { background: #f9a825; }
+  .timeline-dot.skipped { background: #ccc; }
+  .timeline-label { font-weight: 500; min-width: 110px; }
+  .timeline-time { color: #888; font-size: 12.5px; }
+  .timeline-time.paused-text { color: #c62828; font-style: italic; }
+
+  /* Selection mode */
+  .select-col { width: 32px; }
+  .select-col input[type="checkbox"] {
+    width: 16px; height: 16px; cursor: pointer; accent-color: #1a1a1a; margin: 0;
+  }
+  tr.lead-row.selected td { background: #F0EEE6 !important; }
+  tr.lead-row.selected td:first-child { border-left: 3px solid #1a1a1a; }
+  .selection-bar {
+    position: sticky; top: 0; z-index: 20;
+    background: #1a1a1a; color: #fff; border-radius: 12px;
+    padding: 10px 16px; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    font-size: 13px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .selection-bar.hidden { display: none; }
+  .selection-bar .count { font-weight: 600; }
+  .selection-bar .actions { display: flex; gap: 8px; }
+  .selection-bar button {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+    padding: 6px 14px; border-radius: 8px; border: 1px solid #444;
+    background: transparent; color: #fff; cursor: pointer; transition: all 0.15s;
+  }
+  .selection-bar button:hover { background: rgba(255,255,255,0.1); }
+  .selection-bar button.primary { background: #fff; color: #1a1a1a; border-color: #fff; }
+  .selection-bar button.primary:hover { background: #F5F4F0; }
+
+  /* Paused state */
+  tr.lead-row.paused td { color: #888; }
+  tr.lead-row.paused strong { color: #888; font-weight: 500; }
+  .paused-badge {
+    display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    background: #FFF3E0; color: #c62828; border: 1px solid #FFCC80; margin-left: 6px; letter-spacing: 0.02em;
+  }
+  .pause-control {
+    background: #FAFAF8; border: 1px solid #EEECEA; border-radius: 10px;
+    padding: 12px 14px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .pause-control.is-paused { background: #FFF8E1; border-color: #FFE0B2; }
+  .pause-control .label { font-size: 13px; color: #444; }
+  .pause-control .label strong { color: #1a1a1a; }
+  .pause-control .label.paused strong { color: #c62828; }
+  .pause-control button {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px;
+    border-radius: 8px; border: 1px solid #1a1a1a; background: #1a1a1a; color: #fff; cursor: pointer; transition: all 0.15s;
+  }
+  .pause-control button:hover { background: #333; }
+  .pause-control.is-paused button { background: #fff; color: #2e7d32; border-color: #a5d6a7; }
+  .pause-control.is-paused button:hover { background: #E8F5E9; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <h1>All Leads</h1>
+      <p>{{ leads|length }} contact{{ 's' if leads|length != 1 else '' }} saved</p>
+    </div>
+    <div class="header-actions">
+      <a href="/sales/" class="btn" style="font-size:12px; padding:6px 12px; color:#2e7d32; background:#FAFAF8;">Car Sales ↗</a>
+      <button class="btn" style="font-family:'DM Sans',sans-serif; border-color:#ef9a9a; color:#c62828; background:#fff; cursor:pointer;" onclick="pauseAllLeads(this)">Pause all</button>
+      <button class="btn" style="font-family:'DM Sans',sans-serif; border-color:#c62828; color:#fff; background:#c62828; cursor:pointer;" onclick="deleteAllLeads(this)">Delete all leads</button>
+      <a href="/templates" class="btn">Edit templates</a>
+      <a href="/leads/export" class="btn">Export CSV</a>
+      <a href="/" class="btn primary">New lead →</a>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total leads</div>
+      <div class="stat-value">{{ leads|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Follow-up 1 sent</div>
+      <div class="stat-value">{{ leads|selectattr('fu1_sent_at')|list|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Follow-up 2 sent</div>
+      <div class="stat-value">{{ leads|selectattr('fu2_sent_at')|list|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">This month</div>
+      <div class="stat-value">{{ leads|selectattr('created_at', 'defined')|list|length }}</div>
+    </div>
+  </div>
+
+  <div id="selection-bar" class="selection-bar hidden">
+    <div>
+      <span class="count" id="selection-count">0</span> selected — export to CSV to build a Facebook lookalike audience or any other segment
+    </div>
+    <div class="actions">
+      <button onclick="clearSelection()">Clear</button>
+      <button id="bought-selected-btn" style="display:none; border-color:#a5d6a7; color:#a5d6a7;" onclick="boughtSelected()">I bought this car</button>
+      <button class="primary" onclick="exportSelected()">Export selected CSV</button>
+    </div>
+  </div>
+
+  <div class="card">
+    {% if leads %}
+    <table>
+      <thead>
+        <tr>
+          <th class="select-col"><input type="checkbox" id="select-all-visible" onclick="toggleAllVisible(this)" title="Select all" /></th>
+          <th style="width:18px;"></th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Car</th>
+          <th>Reg</th>
+          <th>Offer</th>
+          <th>Source</th>
+          <th>Date</th>
+          <th>FU1</th>
+          <th>FU2</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in leads %}
+        <tr class="lead-row {% if lead.paused %}paused{% endif %}" id="row-{{ lead.id }}"
+            data-lead='{{ lead|tojson }}'
+            onclick="toggleLead({{ lead.id }}, event)">
+          <td class="select-col">
+            <input type="checkbox" class="lead-select" data-lead-id="{{ lead.id }}" onclick="toggleSelection({{ lead.id }}, this, event)" />
+          </td>
+          <td><span class="chev">▶</span></td>
+          <td>
+            <strong>{{ lead.name or '—' }}</strong>
+            {% if lead.paused %}<span class="paused-badge" id="badge-{{ lead.id }}">PAUSED</span>{% else %}<span class="paused-badge" id="badge-{{ lead.id }}" style="display:none;">PAUSED</span>{% endif %}
+          </td>
+          <td>{{ lead.phone or '—' }}</td>
+          <td>{{ lead.car or '—' }}</td>
+          <td><span class="badge">{{ lead.reg or '—' }}</span></td>
+          <td>£{{ lead.offer or '—' }}</td>
+          <td>{{ lead.source or '—' }}</td>
+          <td>{{ lead.created_at[:10] if lead.created_at else '—' }}</td>
+          <td>{{ '✓' if lead.fu1_sent_at else '—' }}</td>
+          <td>{{ '✓' if lead.fu2_sent_at else '—' }}</td>
+          <td style="white-space:nowrap;">
+            {% if lead.status == 'Bought' %}
+            <button class="sell-btn done" disabled>In stock ✓</button>
+            {% else %}
+            <button class="sell-btn" onclick="openSellModal({{ lead.id }}, event)">I bought this car</button>
+            {% endif %}
+            <button class="del-btn" onclick="deleteLead({{ lead.id }}, event)">Delete</button>
+          </td>
+        </tr>
+        <tr class="details-row" id="details-{{ lead.id }}">
+          <td colspan="12">
+            <div class="details-inner">
+
+              <div class="pause-control {% if lead.paused %}is-paused{% endif %}" id="pause-control-{{ lead.id }}">
+                <div class="label {% if lead.paused %}paused{% endif %}" id="pause-label-{{ lead.id }}">
+                  {% if lead.paused %}
+                    <strong>Auto-messages paused</strong> — no further follow-ups or SMS will be sent for this lead.
+                  {% else %}
+                    <strong>Auto-messages active</strong> — pause this if you're already in touch with the lead and want to stop further follow-ups.
+                  {% endif %}
+                </div>
+                <button onclick="togglePaused({{ lead.id }}, event)" id="pause-btn-{{ lead.id }}">
+                  {% if lead.paused %}Resume auto-messages{% else %}Pause auto-messages{% endif %}
+                </button>
+              </div>
+
+              <div class="detail-section-title">Contact details</div>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <div class="detail-label">Name</div>
+                  <div class="detail-value {% if not lead.name %}muted{% endif %}">{{ lead.name or 'Not provided' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Email</div>
+                  <div class="detail-value {% if not lead.email %}muted{% endif %}">
+                    {% if lead.email %}<a href="mailto:{{ lead.email }}">{{ lead.email }}</a>{% else %}Not provided{% endif %}
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Phone</div>
+                  <div class="detail-value {% if not lead.phone %}muted{% endif %}">
+                    {% if lead.phone %}<a href="tel:{{ lead.phone }}">{{ lead.phone }}</a>{% else %}Not provided{% endif %}
+                  </div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Postcode</div>
+                  <div class="detail-value {% if not lead.postcode %}muted{% endif %}">{{ lead.postcode or 'Not provided' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Source</div>
+                  <div class="detail-value">{{ lead.source or '—' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Status</div>
+                  <div class="detail-value">{{ lead.status or 'New' }}</div>
+                </div>
+              </div>
+
+              <div class="detail-section-title">Vehicle & pricing</div>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <div class="detail-label">Car</div>
+                  <div class="detail-value {% if not lead.car %}muted{% endif %}">{{ lead.car or 'Not provided' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Registration</div>
+                  <div class="detail-value {% if not lead.reg %}muted{% endif %}">{{ lead.reg or 'Not provided' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Mileage</div>
+                  <div class="detail-value {% if not lead.mileage %}muted{% endif %}">{{ lead.mileage or 'Not provided' }}</div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Direct offer (trade)</div>
+                  <div class="detail-value">£{{ lead.offer or '—' }}</div>
+                </div>
+                {% if lead.market_target %}
+                {% set mt = lead.market_target.replace(',', '')|int(0) %}
+                {% set fee = 395 if mt < 5000 else (595 if mt <= 15000 else 895) %}
+                {% set net = mt - fee if mt > fee else 0 %}
+                <div class="detail-item">
+                  <div class="detail-label">Market target (list)</div>
+                  <div class="detail-value">£{{ lead.market_target }} · <span style="color:#666;">fee £{{ fee }}</span></div>
+                </div>
+                <div class="detail-item">
+                  <div class="detail-label">Estimated net to seller</div>
+                  <div class="detail-value">£{{ '{:,}'.format(net) }}</div>
+                </div>
+                {% else %}
+                <div class="detail-item">
+                  <div class="detail-label">Market target</div>
+                  <div class="detail-value muted">Trade only — no Market &amp; Sell offered</div>
+                </div>
+                {% endif %}
+              </div>
+
+              <div class="detail-section-title">Notes</div>
+              <div class="notes-box {% if not lead.notes %}empty{% endif %}">{{ lead.notes or 'No notes added.' }}</div>
+
+              <div class="detail-section-title">Auto-message timeline</div>
+              <div>
+                <div class="timeline-item">
+                  <span class="timeline-dot done"></span>
+                  <span class="timeline-label">Initial email</span>
+                  <span class="timeline-time">sent {{ lead.created_at or '—' }}</span>
+                </div>
+                <div class="timeline-item">
+                  <span class="timeline-dot {% if lead.sms_sent_at %}done{% elif lead.sms_send_at and not lead.paused %}scheduled{% else %}skipped{% endif %}"></span>
+                  <span class="timeline-label">SMS (24h)</span>
+                  <span class="timeline-time {% if lead.paused and not lead.sms_sent_at and lead.sms_send_at %}paused-text{% endif %}">
+                    {% if lead.sms_sent_at %}sent {{ lead.sms_sent_at }}
+                    {% elif lead.sms_send_at and lead.paused %}paused — was scheduled for {{ lead.sms_send_at }}
+                    {% elif lead.sms_send_at %}scheduled for {{ lead.sms_send_at }}
+                    {% else %}not scheduled{% endif %}
+                  </span>
+                </div>
+                <div class="timeline-item">
+                  <span class="timeline-dot {% if lead.fu1_sent_at %}done{% elif lead.fu1_send_at and not lead.paused %}scheduled{% else %}skipped{% endif %}"></span>
+                  <span class="timeline-label">Follow-up 1 (2 days)</span>
+                  <span class="timeline-time {% if lead.paused and not lead.fu1_sent_at and lead.fu1_send_at %}paused-text{% endif %}">
+                    {% if lead.fu1_sent_at %}sent {{ lead.fu1_sent_at }}
+                    {% elif lead.fu1_send_at and lead.paused %}paused — was scheduled for {{ lead.fu1_send_at }}
+                    {% elif lead.fu1_send_at %}scheduled for {{ lead.fu1_send_at }}
+                    {% else %}not scheduled{% endif %}
+                  </span>
+                </div>
+                <div class="timeline-item">
+                  <span class="timeline-dot {% if lead.fu2_sent_at %}done{% elif lead.fu2_send_at and not lead.paused %}scheduled{% else %}skipped{% endif %}"></span>
+                  <span class="timeline-label">Follow-up 2 (5 days)</span>
+                  <span class="timeline-time {% if lead.paused and not lead.fu2_sent_at and lead.fu2_send_at %}paused-text{% endif %}">
+                    {% if lead.fu2_sent_at %}sent {{ lead.fu2_sent_at }}
+                    {% elif lead.fu2_send_at and lead.paused %}paused — was scheduled for {{ lead.fu2_send_at }}
+                    {% elif lead.fu2_send_at %}scheduled for {{ lead.fu2_send_at }}
+                    {% else %}not scheduled{% endif %}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No leads saved yet. Send your first email from the lead tool.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- List-for-sale modal: bought the car? Paste your advert description and it goes
+     straight into the Epping Car Sales stock list — nothing typed twice. -->
+<div class="modal-overlay" id="sell-modal" onclick="if(event.target===this)closeSellModal()">
+  <div class="modal">
+    <h2>I bought this car</h2>
+    <div class="sub">Puts it straight into the <strong>Epping Car Sales</strong> stock, ready to send customers information about it. Car details are filled in from the lead — just paste your advert description.</div>
+    <div class="modal-grid">
+      <div class="modal-field full">
+        <label>Car</label>
+        <input type="text" id="sell-car" />
+      </div>
+      <div class="modal-field">
+        <label>Reg</label>
+        <input type="text" id="sell-reg" />
+      </div>
+      <div class="modal-field">
+        <label>Mileage</label>
+        <input type="text" id="sell-mileage" />
+      </div>
+      <div class="modal-field">
+        <label>Year</label>
+        <input type="text" id="sell-year" placeholder="e.g. 2018" />
+      </div>
+      <div class="modal-field">
+        <label>Colour</label>
+        <input type="text" id="sell-colour" placeholder="e.g. Silver" />
+      </div>
+      <div class="modal-field full">
+        <label>Asking price £</label>
+        <input type="text" id="sell-price" placeholder="e.g. 6,995" />
+      </div>
+      <div class="modal-field full">
+        <label>Advert description</label>
+        <textarea id="sell-desc" placeholder="Paste the description you wrote for the advert here — it's saved with the car."></textarea>
+        <div class="modal-hint" id="sell-hint">Tip: paste your advert and I'll pick out the price, year and colour for you if they're in it.</div>
+      </div>
+    </div>
+    <div class="modal-error" id="sell-error"></div>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeSellModal()">Cancel</button>
+      <button class="modal-submit" id="sell-submit" onclick="submitSell()">Add to stock →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Lead selection (for building lookalike CSV exports) ─────────────────────
+  const selectedLeads = new Set();
+
+  function toggleSelection(id, checkbox, event) {
+    if (event) event.stopPropagation();
+    if (checkbox.checked) {
+      selectedLeads.add(id);
+      document.getElementById(`row-${id}`).classList.add('selected');
+    } else {
+      selectedLeads.delete(id);
+      document.getElementById(`row-${id}`).classList.remove('selected');
+    }
+    updateSelectionBar();
+  }
+
+  function toggleAllVisible(masterCheckbox) {
+    const boxes = document.querySelectorAll('input.lead-select');
+    boxes.forEach(cb => {
+      const id = parseInt(cb.dataset.leadId, 10);
+      cb.checked = masterCheckbox.checked;
+      if (masterCheckbox.checked) {
+        selectedLeads.add(id);
+        document.getElementById(`row-${id}`).classList.add('selected');
+      } else {
+        selectedLeads.delete(id);
+        document.getElementById(`row-${id}`).classList.remove('selected');
+      }
+    });
+    updateSelectionBar();
+  }
+
+  function clearSelection() {
+    selectedLeads.clear();
+    document.querySelectorAll('input.lead-select').forEach(cb => cb.checked = false);
+    document.querySelectorAll('tr.lead-row.selected').forEach(r => r.classList.remove('selected'));
+    const master = document.getElementById('select-all-visible');
+    if (master) master.checked = false;
+    updateSelectionBar();
+  }
+
+  function updateSelectionBar() {
+    const bar = document.getElementById('selection-bar');
+    const count = document.getElementById('selection-count');
+    if (selectedLeads.size === 0) {
+      bar.classList.add('hidden');
+    } else {
+      bar.classList.remove('hidden');
+      count.textContent = selectedLeads.size;
+    }
+    // "I bought this car" only makes sense for a single lead
+    document.getElementById('bought-selected-btn').style.display = selectedLeads.size === 1 ? '' : 'none';
+  }
+
+  function boughtSelected() {
+    if (selectedLeads.size !== 1) return;
+    openSellModal([...selectedLeads][0]);
+  }
+
+  function exportSelected() {
+    if (selectedLeads.size === 0) return;
+    // Facebook-friendly headers: first_name and last_name split from the stored 'name' field
+    // so the CSV works directly as a Custom Audience upload.
+    const headers = [
+      'id','first_name','last_name','name','email','phone','car','reg','mileage','postcode',
+      'offer','market_target','source','status','notes',
+      'created_at','fu1_send_at','fu1_sent_at','fu2_send_at','fu2_sent_at',
+      'sms_send_at','sms_sent_at','paused'
+    ];
+    const csvEscape = v => {
+      if (v === null || v === undefined) return '';
+      const s = String(v);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const splitName = full => {
+      const parts = (full || '').trim().split(/\s+/).filter(Boolean);
+      return {
+        first_name: parts[0] || '',
+        last_name:  parts.slice(1).join(' ') || '',
+      };
+    };
+    const rows = [headers.join(',')];
+    document.querySelectorAll('input.lead-select:checked').forEach(cb => {
+      const row = cb.closest('tr.lead-row');
+      const lead = JSON.parse(row.dataset.lead);
+      const { first_name, last_name } = splitName(lead.name);
+      const enriched = { ...lead, first_name, last_name };
+      rows.push(headers.map(h => csvEscape(enriched[h])).join(','));
+    });
+    const csv = rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url;
+    a.download = `epping-leads-selected-${selectedLeads.size}-${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // ── List for sale: lead → Epping Car Sales stock, no re-typing ──────────────
+  let sellLeadId = null;
+
+  function openSellModal(id, event) {
+    if (event) event.stopPropagation();
+    sellLeadId = id;
+    const lead = JSON.parse(document.getElementById(`row-${id}`).dataset.lead);
+    document.getElementById('sell-car').value     = lead.car || '';
+    document.getElementById('sell-reg').value     = lead.reg || '';
+    document.getElementById('sell-mileage').value = lead.mileage || '';
+    document.getElementById('sell-colour').value  = '';
+    document.getElementById('sell-price').value   = '';
+    document.getElementById('sell-desc').value    = '';
+    // Year is often part of the car name, e.g. "2018 Ford Focus"
+    const yearMatch = (lead.car || '').match(/\b(19[89]\d|20[0-4]\d)\b/);
+    document.getElementById('sell-year').value = yearMatch ? yearMatch[0] : '';
+    const err = document.getElementById('sell-error');
+    err.classList.remove('show'); err.textContent = '';
+    document.getElementById('sell-hint').classList.remove('autofilled');
+    document.getElementById('sell-hint').textContent = "Tip: paste your advert and I'll pick out the price, year and colour for you if they're in it.";
+    const btn = document.getElementById('sell-submit');
+    btn.disabled = false; btn.textContent = 'Add to stock →';
+    document.getElementById('sell-modal').classList.add('open');
+    setTimeout(() => document.getElementById('sell-desc').focus(), 50);
+  }
+
+  function closeSellModal() {
+    document.getElementById('sell-modal').classList.remove('open');
+    sellLeadId = null;
+  }
+
+  // When a description is pasted, quietly pre-fill price / year / colour from it
+  // (only into fields that are still empty — never overwrites what's typed).
+  document.getElementById('sell-desc').addEventListener('input', () => {
+    const text = document.getElementById('sell-desc').value;
+    if (!text) return;
+    const filled = [];
+
+    const priceField = document.getElementById('sell-price');
+    if (!priceField.value) {
+      const amounts = [...text.matchAll(/£\s?(\d{1,3}(?:,\d{3})+|\d{3,6})/g)]
+        .map(m => ({ raw: m[1], num: parseInt(m[1].replace(/,/g, ''), 10) }));
+      if (amounts.length) {
+        const best = amounts.reduce((a, b) => (b.num > a.num ? b : a));
+        priceField.value = best.raw;
+        filled.push('price');
+      }
+    }
+
+    const yearField = document.getElementById('sell-year');
+    if (!yearField.value) {
+      const y = text.match(/\b(19[89]\d|20[0-4]\d)\b/);
+      if (y) { yearField.value = y[0]; filled.push('year'); }
+    }
+
+    const colourField = document.getElementById('sell-colour');
+    if (!colourField.value) {
+      const c = text.match(/\b(black|white|silver|grey|gray|blue|red|green|yellow|orange|brown|beige|gold|purple|bronze|maroon|navy|cream|burgundy)\b/i);
+      if (c) { colourField.value = c[0][0].toUpperCase() + c[0].slice(1).toLowerCase(); filled.push('colour'); }
+    }
+
+    if (filled.length) {
+      const hint = document.getElementById('sell-hint');
+      hint.textContent = `Picked out ${filled.join(', ')} from your description — check it looks right.`;
+      hint.classList.add('autofilled');
+    }
+  });
+
+  async function submitSell() {
+    if (!sellLeadId) return;
+    const btn = document.getElementById('sell-submit');
+    const err = document.getElementById('sell-error');
+    err.classList.remove('show');
+    btn.disabled = true;
+    btn.textContent = 'Adding...';
+    try {
+      const res = await fetch(`/leads/list-for-sale/${sellLeadId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          car:         document.getElementById('sell-car').value,
+          reg:         document.getElementById('sell-reg').value,
+          mileage:     document.getElementById('sell-mileage').value,
+          year:        document.getElementById('sell-year').value,
+          colour:      document.getElementById('sell-colour').value,
+          price:       document.getElementById('sell-price').value,
+          description: document.getElementById('sell-desc').value,
+        }),
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || 'Something went wrong');
+      btn.textContent = 'In stock ✓';
+      // Reload so the row shows Bought / In stock and auto-messages show as paused.
+      setTimeout(() => location.reload(), 700);
+    } catch (e) {
+      err.textContent = e.message;
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Add to stock →';
+    }
+  }
+
+  function toggleLead(id, event) {
+    // Don't toggle if a button, link, or checkbox inside the row was clicked
+    if (event && event.target.closest('button, a, input')) return;
+    const row = document.getElementById(`row-${id}`);
+    const details = document.getElementById(`details-${id}`);
+    row.classList.toggle('open');
+    details.classList.toggle('open');
+  }
+
+  async function deleteLead(id, event) {
+    if (event) event.stopPropagation();
+    if (!confirm('Delete this lead?')) return;
+    await fetch(`/leads/delete/${id}`, { method: 'POST' });
+    document.getElementById(`row-${id}`).remove();
+    const details = document.getElementById(`details-${id}`);
+    if (details) details.remove();
+  }
+
+  async function deleteAllLeads(btn) {
+    const typed = prompt('This will permanently DELETE every lead in the database. This cannot be undone.\n\nType DELETE to confirm:');
+    if (typed !== 'DELETE') {
+      if (typed !== null) alert('Cancelled — you must type DELETE exactly (in capitals).');
+      return;
+    }
+    btn.disabled = true;
+    const prev = btn.textContent;
+    btn.textContent = 'Deleting...';
+    try {
+      const res = await fetch('/leads/delete-all', { method: 'POST' });
+      const j = await res.json();
+      if (!j.ok) throw new Error('Failed');
+      btn.textContent = `Deleted ${j.deleted_count} leads`;
+      setTimeout(() => location.reload(), 1200);
+    } catch (err) {
+      alert('Failed to delete: ' + err.message);
+      btn.textContent = prev;
+      btn.disabled = false;
+    }
+  }
+
+  async function pauseAllLeads(btn) {
+    if (!confirm("Pause auto-messages for EVERY lead in the database? No further follow-ups or SMS will fire until you resume them individually. This is useful after a rebrand or before going on holiday.")) return;
+    btn.disabled = true;
+    const prev = btn.textContent;
+    btn.textContent = "Pausing...";
+    try {
+      const res = await fetch("/leads/pause-all", { method: "POST" });
+      const j = await res.json();
+      if (!j.ok) throw new Error("Failed");
+      btn.textContent = `Paused ${j.paused_count} leads — reload page`;
+      btn.style.borderColor = "#a5d6a7";
+      btn.style.color = "#2e7d32";
+      setTimeout(() => location.reload(), 1500);
+    } catch (err) {
+      alert("Failed to pause all: " + err.message);
+      btn.textContent = prev;
+      btn.disabled = false;
+    }
+  }
+
+  async function togglePaused(id, event) {
+    if (event) event.stopPropagation();
+    const row    = document.getElementById(`row-${id}`);
+    const ctrl   = document.getElementById(`pause-control-${id}`);
+    const label  = document.getElementById(`pause-label-${id}`);
+    const btn    = document.getElementById(`pause-btn-${id}`);
+    const badge  = document.getElementById(`badge-${id}`);
+    const newState = !row.classList.contains('paused');
+
+    btn.disabled = true;
+    const prevText = btn.textContent;
+    btn.textContent = newState ? 'Pausing...' : 'Resuming...';
+
+    try {
+      const res = await fetch(`/leads/pause/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paused: newState })
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error('Update failed');
+
+      row.classList.toggle('paused', newState);
+      ctrl.classList.toggle('is-paused', newState);
+      label.classList.toggle('paused', newState);
+      badge.style.display = newState ? 'inline-block' : 'none';
+      label.innerHTML = newState
+        ? '<strong>Auto-messages paused</strong> — no further follow-ups or SMS will be sent for this lead.'
+        : '<strong>Auto-messages active</strong> — pause this if you\'re already in touch with the lead and want to stop further follow-ups.';
+      btn.textContent = newState ? 'Resume auto-messages' : 'Pause auto-messages';
+      btn.disabled = false;
+      // Note: timeline text won't update without a page refresh — that's intentional, page refresh shows the full updated state.
+    } catch (err) {
+      alert('Failed to update: ' + err.message);
+      btn.textContent = prevText;
+      btn.disabled = false;
+    }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Epping Car Buyer — Lead Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #fff; color: #1a1a1a; min-height: 100vh; }
+  
+  .topbar {
+    background: #fff;
+    border-bottom: 1px solid #E8E6E0;
+    padding: 0 2rem;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .topbar img { height: 100px; width: auto; }
+  .header-link { font-size: 13px; color: #555; text-decoration: none; border: 1px solid #E0DDD6; padding: 6px 14px; border-radius: 8px; background: #F5F4F0; }
+  .header-link:hover { background: #EEECEA; }
+
+  .page { max-width: 720px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+  .card { background: #fff; border-radius: 14px; border: 1px solid #E8E6E0; padding: 1.25rem 1.5rem; margin-bottom: 12px; }
+  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  label { font-size: 12px; color: #888; display: block; margin-bottom: 5px; }
+  input[type="text"], input[type="email"], input[type="tel"], select {
+    width: 100%; height: 38px; padding: 0 12px; border: 1px solid #E0DDD6; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: #1a1a1a; background: #FAFAF8; outline: none; transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: #1a1a1a; background: #fff; }
+  .msg-label { font-size: 12px; font-weight: 500; color: #555; margin-bottom: 6px; margin-top: 14px; }
+  .msg-label:first-child { margin-top: 0; }
+  .output-box { background: #FAFAF8; border: 1px solid #E8E6E0; border-radius: 8px; padding: 12px 14px; font-size: 13.5px; line-height: 1.75; color: #1a1a1a; white-space: pre-wrap; min-height: 50px; }
+  .btn-row { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  button.action { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 8px; border: 1px solid #E0DDD6; background: transparent; color: #333; cursor: pointer; transition: all 0.15s; }
+  button.action:hover { background: #F5F4F0; border-color: #aaa; }
+  button.action:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.action.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  button.action.primary:hover { background: #333; }
+  button.action.success { background: #E8F5E9; color: #2e7d32; border-color: #a5d6a7; }
+  button.action.error { background: #FFEBEE; color: #c62828; border-color: #ef9a9a; }
+  button.action.small { font-size: 12px; padding: 5px 12px; }
+  button.action.sms { background: #E8F0FE; color: #1a56db; border-color: #93b4f5; }
+  button.action.sms:hover { background: #d0e3fd; }
+  .divider { border: none; border-top: 1px solid #EEECEA; margin: 14px 0; }
+  .lead-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 0.5px solid #EEECEA; gap: 12px; flex-wrap: wrap; }
+  .lead-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .lead-row:first-child { padding-top: 0; }
+  .lead-info strong { font-size: 13px; font-weight: 500; }
+  .lead-info span { color: #888; margin-left: 6px; font-size: 12px; }
+  .lead-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .empty-log { font-size: 13px; color: #aaa; padding: 8px 0; }
+  .auto-badge { font-size: 11px; background: #E8F5E9; color: #2e7d32; border-radius: 20px; padding: 2px 8px; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <img src="/static/ECBlogo.jpg" alt="Epping Car Buyer" />
+    <div style="display:flex; gap:8px;">
+      <a href="/sales/" class="header-link" style="color:#2e7d32;">Epping Car Sales →</a>
+      <a href="/templates" class="header-link">Edit templates</a>
+      <a href="/leads" class="header-link">View all leads →</a>
+    </div>
+  </div>
+
+  <div class="page">
+
+    <div class="card">
+      <div class="card-title">New lead</div>
+      <div class="grid-3">
+        <div><label>Name</label><input type="text" id="name" placeholder="Jess McLovin" oninput="generate()" /></div>
+        <div><label>Email address</label><input type="email" id="lead-email" placeholder="mike@mail.com" /></div>
+        <div><label>Phone number</label><input type="tel" id="phone" placeholder="+44 7888 961196" oninput="generate()" /></div>
+      </div>
+      <div class="grid-3">
+        <div><label>Car model</label><input type="text" id="car" placeholder="Jaguar XE" oninput="generate()" /></div>
+        <div><label>Registration</label><input type="text" id="reg" placeholder="M88 XES" oninput="generate()" style="text-transform:uppercase;" /></div>
+        <div><label>Mileage</label><input type="text" id="mileage" placeholder="87,000" /></div>
+      </div>
+      <div class="grid-3">
+        <div>
+          <label>Trade price (£) <span style="color:#aaa; font-weight:400;">— if buying</span></label>
+          <input type="text" id="price" placeholder="4,995" oninput="this.value=formatPrice(this.value);generate()" />
+        </div>
+        <div>
+          <label>Market &amp; sell target (£) <span style="color:#aaa; font-weight:400;">— if selling</span></label>
+          <input type="text" id="market_target" placeholder="6,495" oninput="this.value=formatPrice(this.value);generate()" />
+        </div>
+        <div><label>Postcode</label><input type="text" id="postcode" placeholder="PE25 2NG" style="text-transform:uppercase;" /></div>
+      </div>
+      <div class="grid-3">
+        <div><label>Source</label>
+          <select id="source" oninput="generate()">
+            <option value="Facebook">Facebook</option>
+            <option value="Website">Website</option>
+            <option value="Referral">Referral</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div></div><div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Initial contact</div>
+      <div class="msg-label" style="margin-top:0;">Email</div>
+      <div class="output-box" id="email-out"></div>
+      <div class="btn-row">
+        <button class="action primary" onclick="sendInitial(this)">Send email &amp; save lead</button>
+        <button class="action" onclick="copyText('email-out', this)">Copy</button>
+      </div>
+      <hr class="divider" />
+      <div class="msg-label">SMS text <span class="auto-badge">auto-sent after 24h</span></div>
+      <div class="output-box" id="sms-out"></div>
+      <p style="font-size:12px; color:#666; margin: 4px 0 8px 0;">This SMS will send automatically 24 hours after you save the lead. You can also send it now manually.</p>
+      <div class="btn-row">
+        <button class="action sms" onclick="sendSmsNow(this)">Send SMS now</button>
+        <button class="action" onclick="copyText('sms-out', this)">Copy</button>
+      </div>
+      <hr class="divider" />
+      <div class="msg-label">WhatsApp</div>
+      <div class="output-box" id="wa-out"></div>
+      <div class="btn-row">
+        <button class="action" onclick="copyText('wa-out', this)">Copy WhatsApp</button>
+        <button class="action" onclick="copyPhone(this)">
+          Copy number: <span id="wa-phone-display" style="font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 600; margin-left: 4px;">—</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Follow-ups <span class="auto-badge">auto-scheduled</span></div>
+      <p style="font-size:13px; color:#666; margin-bottom:12px;">SMS fires automatically after 24 hours. Follow-up 1 fires after 2 days. Follow-up 2 fires after 5 days. You can also trigger them manually below.</p>
+      <div id="lead-log"><p class="empty-log">No leads sent yet. Send an initial email above and it will appear here.</p></div>
+    </div>
+
+  </div>
+
+<script>
+  // Just "Kind regards," here — the full signature (name, title, contact details
+  // and the logo) is added automatically when the email is sent.
+  const SIGN_OFF = `Kind regards,`;
+
+  let leads = JSON.parse(localStorage.getItem('scb_leads') || '[]');
+  function saveLocal() { localStorage.setItem('scb_leads', JSON.stringify(leads)); }
+
+  function normalisePhone(num) {
+    num = num.replace(/\s+/g, '');
+    if (num.startsWith('07')) return '+44' + num.slice(1);
+    return num;
+  }
+
+  function getGreeting() {
+    const day = new Date().getDay();
+    if (day === 1) return "I hope you had a good weekend.";
+    if (day >= 2 && day <= 4) return "I hope you are having a good week.";
+    if (day === 5) return "I hope you are having a good end to the week.";
+    return "I hope you are having a good weekend.";
+  }
+function formatPrice(val) {
+  const num = val.replace(/,/g, '').replace(/[^0-9]/g, '');
+  if (!num) return val;
+  return parseInt(num).toLocaleString('en-GB');
+}
+  // Extract the first word from a full name — used for greetings ("Hi Jess" not "Hi Jess McLovin")
+  function firstNameOf(fullName) {
+    const trimmed = (fullName || '').trim();
+    if (!trimmed) return '[Name]';
+    return trimmed.split(/\s+/)[0];
+  }
+
+  function vals() {
+    const fullName = document.getElementById('name').value.trim();
+    return {
+      name:          fullName                                                   || '[Name]',   // stored as-is (full name)
+      first_name:    firstNameOf(fullName),                                                      // used only in greetings
+      email:         document.getElementById('lead-email').value.trim()        || '',
+      phone:         normalisePhone(document.getElementById('phone').value.trim()),
+      car:           document.getElementById('car').value.trim()               || '[Car]',
+      reg:           document.getElementById('reg').value.trim().toUpperCase() || '[Reg]',
+      mileage:       document.getElementById('mileage').value.trim()           || '',
+      price:         document.getElementById('price').value.trim()             || '',
+      market_target: document.getElementById('market_target').value.trim()     || '',
+      postcode:      document.getElementById('postcode').value.trim().toUpperCase() || '',
+      source:        document.getElementById('source').value                   || 'Facebook',
+    };
+  }
+
+  function emailBody(name, car, price, marketTarget) {
+    if (price && marketTarget) {
+      // Both — offer two options
+      return `Hi ${name},\n\nThank you for getting in touch. ${getGreeting()}\n\nI've had a look at your ${car} and I can offer two options:\n\nDirect purchase — £${price}\nI'd buy the car from you outright. If it's in very good condition there may be a little room to improve on that once I've seen it.\n\nList and sell — target £${marketTarget}\nWe'd advertise it across all the main platforms, handle all enquiries and viewings, and deal with the paperwork. You hand over the keys when it sells.\n\nNo pressure either way — just let me know which suits and we can go from there.\n\n${SIGN_OFF}`;
+    }
+    if (marketTarget) {
+      // Market & sell only
+      return `Hi ${name},\n\nThank you for getting in touch. ${getGreeting()}\n\nBased on what you've told me, I think we could achieve around £${marketTarget} for your ${car}. We'd advertise it across all the main platforms, handle enquiries and viewings, and sort all the paperwork — you just hand over the keys when it sells.\n\nIf you'd like to go ahead or want to have a quick chat first, just reply here or give me a call.\n\n${SIGN_OFF}`;
+    }
+    // Trade/buy only
+    return `Hi ${name},\n\nThank you for getting in touch. ${getGreeting()}\n\nBased on the details you provided, we can offer £${price || '[Price]'} for your ${car} subject to condition and service history. If the car is in very good condition, we'd be happy to offer a bit more after a quick inspection.\n\nWe aren't very far away and can be flexible with times to suit you.\n\nIf you have any questions in the meantime, feel free to reply here or contact me by phone or WhatsApp.\n\n${SIGN_OFF}`;
+  }
+  function smsBody(name, car, price, marketTarget) {
+    if (marketTarget && !price) {
+      return `Hi ${name}, Henry from Epping Car Buyer here. Thanks for your enquiry on your ${car}. I've just emailed — I think we could achieve around £${marketTarget} for it. We handle all the advertising, viewings and paperwork. Reply to henry@eppingcarbuyer.com or call/WhatsApp +44 1992 367909.`;
+    }
+    return `Hi ${name}, Henry from Epping Car Buyer here. Thanks for your enquiry on your ${car}. I've just emailed an offer of £${price || marketTarget} — if the car's well looked after we can often improve on it. Reply to henry@eppingcarbuyer.com or call/WhatsApp +44 1992 367909.`;
+  }
+  function waBody(name, car, price, marketTarget) {
+    if (marketTarget && !price) {
+      return `Hi ${name}, thank you for your enquiry. I've just emailed — I think we could achieve around £${marketTarget} for your ${car}. We handle everything from the listing through to the paperwork. Happy to chat if you'd like. Many Thanks, Henry`;
+    }
+    return `Hi ${name}, thank you for your enquiry. I've just emailed you an offer of £${price || marketTarget} for your ${car}. If the car has been well looked after we're happy to improve on that, and we can be flexible with times to suit you. Many Thanks, Henry`;
+  }
+  function fu1Body(name, car, price, marketTarget) {
+    if (marketTarget && !price) {
+      return `Hi ${name},\n\nJust following up on my email about your ${car} — I wanted to make sure it reached you.\n\nWe still think we can achieve around £${marketTarget} for it and have everything ready to go. You'd just need to give the go-ahead and we can book in a quick look at the car.\n\nWould this week or next suit?\n\n${SIGN_OFF}`;
+    }
+    return `Hi ${name},\n\nJust following up on my email about your ${car} — I wanted to make sure it reached you.\n\nOur offer of £${price} still stands, and if the car has been well looked after there's usually room to improve on that once I've seen it. We can come to you, pay on the day, and handle all the paperwork.\n\nWould this week or next suit for a quick look?\n\n${SIGN_OFF}`;
+  }
+  function fu2Body(name, car, price, marketTarget) {
+    if (marketTarget && !price) {
+      return `Hi ${name},\n\nThis will be my last email on this — I just wanted to check you'd seen my message about your ${car}.\n\nIf you've already sold or decided to keep it, no problem at all — a quick reply to let me know would be appreciated.\n\nIf you're still considering it, we think we can achieve around £${marketTarget} and handle everything from start to finish. Happy to work around a time that suits you.\n\n${SIGN_OFF}`;
+    }
+    return `Hi ${name},\n\nThis will be my last email on this — I just wanted to check you'd seen my offer of £${price} for your ${car}.\n\nIf you've already sold or decided to keep the car, no problem at all — a quick reply to let me know would be much appreciated.\n\nIf you're still considering it, the offer stands, and if the car has been well looked after we're happy to improve on that once I've seen it.\n\n${SIGN_OFF}`;
+  }
+
+  function generate() {
+    const { first_name, car, price, market_target, phone } = vals();
+    document.getElementById('email-out').textContent = emailBody(first_name, car, price, market_target);
+    document.getElementById('sms-out').textContent   = smsBody(first_name, car, price, market_target);
+    document.getElementById('wa-out').textContent    = waBody(first_name, car, price, market_target);
+    document.getElementById('wa-phone-display').textContent = phone || '—';
+  }
+
+  function copyText(id, btn) {
+    navigator.clipboard.writeText(document.getElementById(id).textContent).then(() => {
+      const orig = btn.textContent;
+      btn.textContent = 'Copied';
+      btn.classList.add('success');
+      setTimeout(() => { btn.textContent = orig; btn.classList.remove('success'); }, 1500);
+    });
+  }
+
+  function copyPhone(btn) {
+    const phone = document.getElementById('wa-phone-display').textContent;
+    if (!phone || phone === '—') {
+      btn.textContent = 'No number entered';
+      btn.classList.add('error');
+      setTimeout(() => {
+        btn.innerHTML = 'Copy number: <span id="wa-phone-display" style="font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 600; margin-left: 4px;">—</span>';
+        btn.classList.remove('error');
+      }, 1500);
+      return;
+    }
+    navigator.clipboard.writeText(phone).then(() => {
+      const orig = btn.innerHTML;
+      btn.textContent = 'Copied ' + phone;
+      btn.classList.add('success');
+      setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('success'); }, 1500);
+    });
+  }
+
+  async function doSend(payload) {
+    const res = await fetch('/send', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error);
+    return data;
+  }
+
+  async function sendInitial(btn) {
+    const v = vals();
+    if (!v.email) { alert('Please enter the lead\'s email address.'); return; }
+    btn.textContent = 'Sending...'; btn.disabled = true;
+    try {
+      const result = await doSend({ ...v, subject: `${v.reg}, Epping Car Buyer`, body: emailBody(v.first_name, v.car, v.price, v.market_target), save: true });
+      btn.textContent = 'Sent'; btn.classList.add('success');
+      leads.unshift({ ...v, id: result.lead_id, sentAt: Date.now() });
+      saveLocal(); renderLog();
+      setTimeout(() => { btn.textContent = 'Send email & save lead'; btn.classList.remove('success'); btn.disabled = false; }, 2500);
+    } catch (err) {
+      btn.textContent = 'Failed'; btn.classList.add('error');
+      alert('Send failed: ' + err.message);
+      setTimeout(() => { btn.textContent = 'Send email & save lead'; btn.classList.remove('error'); btn.disabled = false; }, 2500);
+    }
+  }
+
+  async function sendSmsNow(btn) {
+    const v = vals();
+    if (!v.phone || v.phone === '') { alert('Please enter the lead\'s phone number.'); return; }
+    btn.textContent = 'Sending...'; btn.disabled = true;
+    try {
+      const res = await fetch('/send-sms', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: v.phone, message: smsBody(v.first_name, v.car, v.price, v.market_target) }) });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      btn.textContent = 'Sent'; btn.classList.add('success');
+      setTimeout(() => { btn.textContent = 'Send SMS'; btn.classList.remove('success'); btn.disabled = false; }, 2500);
+    } catch (err) {
+      btn.textContent = 'Failed'; btn.classList.add('error');
+      alert('SMS failed: ' + err.message);
+      setTimeout(() => { btn.textContent = 'Send SMS'; btn.classList.remove('error'); btn.disabled = false; }, 2500);
+    }
+  }
+
+  async function sendFollowUp(index, num, btn) {
+    const lead = leads[index];
+    const subject = num === 1 ? `${lead.reg}, Following Up — Epping Car Buyer` : `${lead.reg}, Last Follow-up — Epping Car Buyer`;
+    const body = num === 1 ? fu1Body(lead.name, lead.car, lead.price, lead.market_target) : fu2Body(lead.name, lead.car, lead.price, lead.market_target);
+    btn.textContent = 'Sending...'; btn.disabled = true;
+    try {
+      await doSend({ email: lead.email, subject, body, lead_id: lead.id, fu_num: num });
+      btn.textContent = 'Sent'; btn.classList.add('success');
+      setTimeout(() => { btn.textContent = `Follow-up ${num}`; btn.classList.remove('success'); btn.disabled = false; }, 2500);
+    } catch (err) {
+      btn.textContent = 'Failed'; btn.classList.add('error');
+      alert('Send failed: ' + err.message);
+      setTimeout(() => { btn.textContent = `Follow-up ${num}`; btn.classList.remove('error'); btn.disabled = false; }, 2500);
+    }
+  }
+
+  function removeLead(index) { leads.splice(index, 1); saveLocal(); renderLog(); }
+
+  function renderLog() {
+    const log = document.getElementById('lead-log');
+    if (!leads.length) { log.innerHTML = '<p class="empty-log">No leads sent yet. Send an initial email above and it will appear here.</p>'; return; }
+    log.innerHTML = leads.map((lead, i) => {
+      const date = new Date(lead.sentAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+      return `<div class="lead-row">
+        <div class="lead-info">
+          <strong>${lead.name}</strong> &mdash; ${lead.car} (${lead.reg})
+          <span>£${lead.price} &middot; ${date}</span>
+        </div>
+        <div class="lead-actions">
+          <button class="action small" onclick="sendFollowUp(${i},1,this)">Follow-up 1</button>
+          <button class="action small" onclick="sendFollowUp(${i},2,this)">Follow-up 2</button>
+          <button class="action small" onclick="removeLead(${i})" style="color:#c62828;border-color:#ef9a9a;">Remove</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  generate();
+  renderLog();
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Stock List — Epping Car Sales</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #F5F4F0; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem 4rem; }
+  .container { max-width: 960px; margin: 0 auto; }
+  header { margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+  header h1 { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; }
+  header p { font-size: 13px; color: #777; margin-top: 3px; }
+  .header-actions { display: flex; gap: 8px; }
+  a.btn { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 8px; border: 1px solid #E0DDD6; background: #fff; color: #333; text-decoration: none; }
+  a.btn:hover { background: #F5F4F0; }
+  a.btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  a.btn.primary:hover { background: #333; }
+
+  .card { background: #fff; border-radius: 14px; border: 1px solid #E8E6E0; padding: 1.25rem 1.5rem; margin-bottom: 14px; }
+  .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 14px; }
+
+  /* Add car form */
+  .add-grid { display: grid; grid-template-columns: 1fr 2fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .add-grid-2 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  label { font-size: 12px; color: #888; display: block; margin-bottom: 4px; }
+  input[type="text"], select {
+    width: 100%; height: 36px; padding: 0 10px; border: 1px solid #E0DDD6; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: #1a1a1a; background: #FAFAF8; outline: none;
+  }
+  input:focus, select:focus { border-color: #1a1a1a; background: #fff; }
+  #add-reg { text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; }
+  button.action { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px; border-radius: 8px; border: 1px solid #E0DDD6; background: transparent; color: #333; cursor: pointer; transition: all 0.15s; }
+  button.action:hover { background: #F5F4F0; }
+  button.action.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  button.action.primary:hover { background: #333; }
+  button.action.success { background: #E8F5E9; color: #2e7d32; border-color: #a5d6a7; }
+  button.action.error { background: #FFEBEE; color: #c62828; border-color: #ef9a9a; }
+
+  /* Stock table */
+  .empty { font-size: 14px; color: #aaa; text-align: center; padding: 3rem 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #999; padding: 0 12px 10px 0; border-bottom: 1px solid #EEECEA; }
+  td { padding: 10px 12px 10px 0; border-bottom: 0.5px solid #EEECEA; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .reg-badge { display: inline-block; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 6px; background: #1a1a1a; color: #fff; letter-spacing: 0.04em; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .status-badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+  .status-Available { background: #E8F5E9; color: #2e7d32; }
+  .status-Sold { background: #FFEBEE; color: #c62828; }
+  .status-Reserved { background: #FFF3E0; color: #e65100; }
+  .del-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #ef9a9a; background: transparent; color: #c62828; cursor: pointer; }
+  .del-btn:hover { background: #FFEBEE; }
+
+  /* Inline edit */
+  .edit-select { height: 30px; font-size: 12px; padding: 0 6px; border-radius: 6px; }
+  .save-btn { font-family: 'DM Sans', sans-serif; font-size: 12px; padding: 4px 10px; border-radius: 6px; border: 1px solid #a5d6a7; background: #E8F5E9; color: #2e7d32; cursor: pointer; }
+  .save-btn:hover { background: #c8e6c9; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 12px; }
+  .stat { background: #fff; border-radius: 12px; border: 1px solid #E8E6E0; padding: 1rem 1.25rem; }
+  .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div>
+      <h1>Stock List</h1>
+      <p>{{ stock|length }} car{{ 's' if stock|length != 1 else '' }} in stock</p>
+    </div>
+    <div class="header-actions">
+      <a href="/" class="btn">&larr; Epping Car Buyer</a>
+      <a href="/sales/leads" class="btn">All leads</a>
+      <a href="/sales/" class="btn primary">New enquiry →</a>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Total in stock</div>
+      <div class="stat-value">{{ stock|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Available</div>
+      <div class="stat-value">{{ stock|selectattr('status','equalto','Available')|list|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Reserved / Sold</div>
+      <div class="stat-value">{{ stock|rejectattr('status','equalto','Available')|list|length }}</div>
+    </div>
+  </div>
+
+  <!-- Add car -->
+  <div class="card">
+    <div class="card-title">Add car to stock</div>
+    <div class="add-grid">
+      <div><label>Reg *</label><input type="text" id="add-reg" placeholder="AB20 XYZ" /></div>
+      <div><label>Make &amp; model *</label><input type="text" id="add-car" placeholder="2020 Ford Focus ST-Line" /></div>
+      <div><label>Year</label><input type="text" id="add-year" placeholder="2020" /></div>
+      <div><label>Colour</label><input type="text" id="add-colour" placeholder="Magnetic Grey" /></div>
+    </div>
+    <div class="add-grid-2">
+      <div><label>Mileage</label><input type="text" id="add-mileage" placeholder="24,000" /></div>
+      <div><label>Price (£)</label><input type="text" id="add-price" placeholder="18,995" oninput="this.value=fmtPrice(this.value)" /></div>
+      <div><label>Status</label>
+        <select id="add-status">
+          <option value="Available">Available</option>
+          <option value="Reserved">Reserved</option>
+          <option value="Sold">Sold</option>
+        </select>
+      </div>
+      <div><label>Notes</label><input type="text" id="add-notes" placeholder="FSH, one owner…" /></div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="action primary" onclick="addCar(this)" style="width:100%;">Add car</button>
+      </div>
+    </div>
+    <div id="add-error" style="font-size:12px; color:#c62828; margin-top:4px; display:none;"></div>
+  </div>
+
+  <!-- Stock table -->
+  <div class="card">
+    {% if stock %}
+    <table>
+      <thead>
+        <tr>
+          <th>Reg</th>
+          <th>Car</th>
+          <th>Year</th>
+          <th>Colour</th>
+          <th>Mileage</th>
+          <th>Price</th>
+          <th>Status</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="stock-tbody">
+        {% for car in stock %}
+        <tr id="car-row-{{ car.id }}">
+          <td><span class="reg-badge">{{ car.reg }}</span></td>
+          <td><strong>{{ car.car }}</strong></td>
+          <td>{{ car.year or '—' }}</td>
+          <td>{{ car.colour or '—' }}</td>
+          <td>{{ car.mileage or '—' }}</td>
+          <td>{% if car.price %}£{{ car.price }}{% else %}—{% endif %}</td>
+          <td>
+            <select class="edit-select" id="status-{{ car.id }}" onchange="statusChanged({{ car.id }})">
+              <option value="Available" {% if car.status == 'Available' %}selected{% endif %}>Available</option>
+              <option value="Reserved"  {% if car.status == 'Reserved'  %}selected{% endif %}>Reserved</option>
+              <option value="Sold"      {% if car.status == 'Sold'      %}selected{% endif %}>Sold</option>
+            </select>
+          </td>
+          <td style="color:#777; font-size:12px;">{{ car.notes or '' }}</td>
+          <td>
+            <button class="del-btn" onclick="deleteCar({{ car.id }}, event)">Delete</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty">No cars in stock yet. Add your first car above.</p>
+    {% endif %}
+  </div>
+
+</div>
+<script>
+  function fmtPrice(val) {
+    const num = val.replace(/,/g, '').replace(/[^0-9]/g, '');
+    if (!num) return val;
+    return parseInt(num).toLocaleString('en-GB');
+  }
+
+  async function addCar(btn) {
+    const reg    = document.getElementById('add-reg').value.trim();
+    const car    = document.getElementById('add-car').value.trim();
+    const errEl  = document.getElementById('add-error');
+    if (!reg || !car) { showErr('Reg and make/model are required.'); return; }
+    errEl.style.display = 'none';
+    btn.textContent = 'Adding...'; btn.disabled = true;
+    try {
+      const res = await fetch('/sales/stock/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reg,
+          car,
+          year:    document.getElementById('add-year').value.trim(),
+          colour:  document.getElementById('add-colour').value.trim(),
+          mileage: document.getElementById('add-mileage').value.trim(),
+          price:   document.getElementById('add-price').value.trim(),
+          status:  document.getElementById('add-status').value,
+          notes:   document.getElementById('add-notes').value.trim(),
+        })
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || 'Failed');
+      btn.textContent = 'Added!'; btn.classList.add('success');
+      setTimeout(() => location.reload(), 800);
+    } catch (err) {
+      showErr(err.message);
+      btn.textContent = 'Add car'; btn.classList.remove('success'); btn.disabled = false;
+    }
+  }
+
+  function showErr(msg) {
+    const el = document.getElementById('add-error');
+    el.textContent = msg;
+    el.style.display = 'block';
+  }
+
+  async function statusChanged(id) {
+    const newStatus = document.getElementById(`status-${id}`).value;
+    try {
+      await fetch(`/sales/stock/update/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      });
+    } catch (e) {
+      alert('Failed to update status');
+    }
+  }
+
+  async function deleteCar(id, event) {
+    if (event) event.stopPropagation();
+    if (!confirm('Remove this car from stock?')) return;
+    await fetch(`/sales/stock/delete/${id}`, { method: 'POST' });
+    const row = document.getElementById(`car-row-${id}`);
+    if (row) row.remove();
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Edit Follow-up Templates — Epping Car Buyer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: #F5F4F0; color: #1a1a1a; min-height: 100vh; padding: 0 0 4rem; }
+  .topbar {
+    background: #fff; border-bottom: 1px solid #E8E6E0;
+    padding: 0 2rem; height: 120px; display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar img { height: 100px; width: auto; }
+  .header-actions { display: flex; gap: 8px; }
+  a.header-link, a.btn {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; color: #555; text-decoration: none;
+    border: 1px solid #E0DDD6; padding: 7px 14px; border-radius: 8px; background: #F5F4F0;
+  }
+  a.header-link:hover, a.btn:hover { background: #EEECEA; }
+  .container { max-width: 880px; margin: 0 auto; padding: 2rem 1rem 1rem; }
+  header.page-header { margin-bottom: 1.25rem; }
+  header.page-header h1 { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+  header.page-header p { font-size: 13px; color: #777; margin-top: 4px; max-width: 640px; }
+
+  .card { background: #fff; border-radius: 14px; border: 1px solid #E8E6E0; padding: 1.25rem 1.5rem; margin-bottom: 14px; }
+  .card-title {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: #999; margin-bottom: 4px;
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .card-sub { font-size: 12px; color: #888; margin-bottom: 14px; }
+  .auto-badge { font-size: 11px; background: #E8F5E9; color: #2e7d32; border-radius: 20px; padding: 2px 8px; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+  .placeholders { background: #FAFAF8; border: 1px solid #EEECEA; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 12.5px; color: #666; }
+  .placeholders code { background: #fff; border: 1px solid #E8E6E0; border-radius: 6px; padding: 1px 7px; font-size: 12px; color: #333; margin: 0 2px; font-family: ui-monospace, Menlo, Consolas, monospace; }
+
+  textarea {
+    width: 100%; min-height: 220px; padding: 12px 14px; border: 1px solid #E0DDD6; border-radius: 10px;
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.65; color: #1a1a1a;
+    background: #FAFAF8; outline: none; resize: vertical; transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: #1a1a1a; background: #fff; }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  button.action {
+    font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 7px 16px;
+    border-radius: 8px; border: 1px solid #E0DDD6; background: transparent; color: #333; cursor: pointer; transition: all 0.15s;
+  }
+  button.action:hover { background: #F5F4F0; border-color: #aaa; }
+  button.action.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  button.action.primary:hover { background: #333; }
+  button.action.success { background: #E8F5E9; color: #2e7d32; border-color: #a5d6a7; }
+  button.action.error { background: #FFEBEE; color: #c62828; border-color: #ef9a9a; }
+  button.action.subtle { font-size: 12px; padding: 6px 12px; color: #777; }
+  .status-text { font-size: 12px; color: #888; margin-left: auto; }
+
+  .preview-box {
+    background: #FAFAF8; border: 1px dashed #E0DDD6; border-radius: 10px; padding: 14px 16px;
+    font-size: 13.5px; line-height: 1.75; color: #1a1a1a; white-space: pre-wrap; margin-top: 10px; display: none;
+  }
+  .preview-box.shown { display: block; }
+  .preview-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; font-weight: 600; }
+</style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a href="/"><img src="/static/ECBlogo.jpg" alt="Epping Car Buyer" /></a>
+    <div class="header-actions">
+      <a href="/" class="header-link">← Back to lead form</a>
+      <a href="/leads" class="header-link">All leads</a>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <header class="page-header">
+      <h1>Edit follow-up templates</h1>
+      <p>Edit the wording of the automatic follow-up emails. Changes apply to every future follow-up — leads already saved will use the updated wording too. Use the placeholders shown below to insert the lead's details automatically.</p>
+    </header>
+
+    <div class="placeholders">
+      <strong>Available placeholders:</strong>
+      <code>{name}</code>
+      <code>{car}</code>
+      <code>{price}</code>
+      <code>{reg}</code>
+      <code>{SIGN_OFF}</code>
+      <span style="color:#999;"> — type these in the text and they'll be replaced with each lead's real values when the email goes out. <code>{SIGN_OFF}</code> inserts your signature block.</span>
+    </div>
+
+    <!-- Follow-up 1 -->
+    <div class="card">
+      <div class="card-title">
+        <span>Follow-up 1 <span class="auto-badge">fires after 2 days</span></span>
+      </div>
+      <p class="card-sub">Sent automatically 2 days after the initial email if the lead hasn't replied.</p>
+      <textarea id="fu1_body" data-key="fu1_body">{{ fu1_body }}</textarea>
+      <div class="btn-row">
+        <button class="action primary" onclick="saveTemplate('fu1_body', this)">Save changes</button>
+        <button class="action" onclick="previewTemplate('fu1_body')">Preview with sample lead</button>
+        <button class="action subtle" onclick="resetToDefault('fu1_body', this)">Reset to default</button>
+        <span class="status-text" id="fu1_body-status"></span>
+      </div>
+      <div class="preview-box" id="fu1_body-preview"></div>
+    </div>
+
+    <!-- Follow-up 2 -->
+    <div class="card">
+      <div class="card-title">
+        <span>Follow-up 2 <span class="auto-badge">fires after 5 days</span></span>
+      </div>
+      <p class="card-sub">Sent automatically 5 days after the initial email if the lead still hasn't replied. The "soft close" / final nudge.</p>
+      <textarea id="fu2_body" data-key="fu2_body">{{ fu2_body }}</textarea>
+      <div class="btn-row">
+        <button class="action primary" onclick="saveTemplate('fu2_body', this)">Save changes</button>
+        <button class="action" onclick="previewTemplate('fu2_body')">Preview with sample lead</button>
+        <button class="action subtle" onclick="resetToDefault('fu2_body', this)">Reset to default</button>
+        <span class="status-text" id="fu2_body-status"></span>
+      </div>
+      <div class="preview-box" id="fu2_body-preview"></div>
+    </div>
+
+  </div>
+
+<script>
+  const DEFAULTS = {
+    fu1_body: {{ defaults["fu1_body"]|tojson }},
+    fu2_body: {{ defaults["fu2_body"]|tojson }},
+  };
+
+  async function saveTemplate(key, btn) {
+    const body = document.getElementById(key).value;
+    const statusEl = document.getElementById(key + "-status");
+    btn.disabled = true; btn.textContent = "Saving...";
+    statusEl.textContent = "";
+    try {
+      const res = await fetch("/templates/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, body })
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || "Save failed");
+      btn.textContent = "Saved";
+      btn.classList.add("success");
+      statusEl.textContent = "Last saved just now";
+      setTimeout(() => {
+        btn.textContent = "Save changes";
+        btn.classList.remove("success");
+        btn.disabled = false;
+      }, 2000);
+    } catch (err) {
+      btn.textContent = "Failed";
+      btn.classList.add("error");
+      statusEl.textContent = err.message;
+      setTimeout(() => {
+        btn.textContent = "Save changes";
+        btn.classList.remove("error");
+        btn.disabled = false;
+      }, 2500);
+    }
+  }
+
+  async function previewTemplate(key) {
+    const body = document.getElementById(key).value;
+    const previewEl = document.getElementById(key + "-preview");
+    try {
+      const res = await fetch("/templates/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body })
+      });
+      const j = await res.json();
+      if (!j.ok) throw new Error(j.error || "Preview failed");
+      previewEl.innerHTML = '<div class="preview-label">Preview — sample lead: John, 2018 Ford Focus, £4500</div>' +
+                            '<div>' + escapeHtml(j.preview) + '</div>';
+      previewEl.classList.add("shown");
+    } catch (err) {
+      previewEl.innerHTML = '<div style="color:#c62828">Preview failed: ' + escapeHtml(err.message) + '</div>';
+      previewEl.classList.add("shown");
+    }
+  }
+
+  function resetToDefault(key, btn) {
+    if (!confirm("Reset this template to the original wording? Your current changes will be lost.")) return;
+    document.getElementById(key).value = DEFAULTS[key] || "";
+    document.getElementById(key + "-preview").classList.remove("shown");
+    const statusEl = document.getElementById(key + "-status");
+    statusEl.textContent = "Reset — click Save changes to keep this.";
+  }
+
+  function escapeHtml(s) {
+    const div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+</script>
+</body>
+</html>

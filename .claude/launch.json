@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "henryscarcomps-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/henrythorogood/Downloads/henryscarcomps", "run", "dev", "--", "--port", "8788"],
+      "port": 8788
+    },
+    {
+      "name": "hcc-allocator-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/henrythorogood/Downloads/hcc-allocator", "run", "dev", "--", "--port", "8789"],
+      "port": 8789
+    }
+  ]
+}

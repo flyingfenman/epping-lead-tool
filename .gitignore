@@ -1,0 +1,11 @@
+.env
+token.pickle
+credentials.json
+__pycache__/
+*.pyc
+.DS_Store
+venv/
+*.db
+backups/
+test_write.tmp
+.idea/
