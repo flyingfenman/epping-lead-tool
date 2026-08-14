@@ -665,18 +665,6 @@ def templates_preview():
     )
     return jsonify({"ok": True, "preview": rendered})
 
-UPLOAD_SECRET = os.getenv("UPLOAD_SECRET", "")
-
-@app.route("/admin/upload-db", methods=["POST"])
-def upload_db():
-    if not UPLOAD_SECRET or request.args.get("secret") != UPLOAD_SECRET:
-        return "Forbidden", 403
-    f = request.files.get("file")
-    if not f:
-        return "No file", 400
-    f.save(DB_PATH)
-    count = sqlite3.connect(DB_PATH).execute("SELECT COUNT(*) FROM leads").fetchone()[0]
-    return f"OK — {count} leads loaded", 200
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
