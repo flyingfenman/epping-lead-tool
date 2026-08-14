@@ -44,7 +44,9 @@ SMS_ENABLED      = os.getenv("SMS_ENABLED", "false").strip().lower() in ("true",
 FB_VERIFY_TOKEN  = os.getenv("FACEBOOK_VERIFY_TOKEN", "")
 FB_PAGE_TOKEN    = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "")
 
-DB_PATH          = os.path.join(os.path.dirname(__file__), "leads.db")
+DATA_DIR         = os.getenv("DATA_DIR", os.path.dirname(__file__))
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH          = os.path.join(DATA_DIR, "leads.db")
 
 # Logo embedded as the email signature (an email-sized copy, kept small on purpose)
 LOGO_PATH        = os.path.join(os.path.dirname(__file__), "static", "ECBlogo_email.jpg")

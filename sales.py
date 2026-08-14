@@ -37,11 +37,13 @@ TWILIO_TOKEN   = os.getenv("SALES_TWILIO_AUTH_TOKEN") or os.getenv("TWILIO_AUTH_
 TWILIO_FROM    = os.getenv("SALES_TWILIO_FROM_NUMBER")
 SMS_ENABLED    = os.getenv("SALES_SMS_ENABLED", "false").strip().lower() in ("true", "1", "yes", "on")
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "sales.db")
+DATA_DIR = os.getenv("DATA_DIR", os.path.dirname(__file__))
+os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(DATA_DIR, "sales.db")
 
 # The buying side's database — read-only here, used so a reg search on the sales
 # enquiry form can find cars you bought through Epping Car Buyer.
-BUYER_DB_PATH = os.path.join(os.path.dirname(__file__), "leads.db")
+BUYER_DB_PATH = os.path.join(DATA_DIR, "leads.db")
 
 # Logo embedded as the email signature (an email-sized copy, kept small on purpose)
 LOGO_PATH = os.path.join(os.path.dirname(__file__), "static", "ECSlogo_email.png")
