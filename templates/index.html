@@ -150,8 +150,19 @@
   // and the logo) is added automatically when the email is sent.
   const SIGN_OFF = `Kind regards,`;
 
-  let leads = JSON.parse(localStorage.getItem('scb_leads') || '[]');
-  function saveLocal() { localStorage.setItem('scb_leads', JSON.stringify(leads)); }
+  let leads = [];
+  function saveLocal() {}
+  async function loadLeads() {
+    const res = await fetch('/api/leads');
+    const data = await res.json();
+    leads = data.map(l => ({
+      id: l.id, name: l.name, car: l.car, reg: l.reg,
+      email: l.email, phone: l.phone, price: l.offer,
+      market_target: l.market_target, sentAt: l.created_at
+    }));
+    renderLog();
+  }
+  loadLeads();
 
   function normalisePhone(num) {
     num = num.replace(/\s+/g, '');
@@ -282,8 +293,7 @@ function formatPrice(val) {
     try {
       const result = await doSend({ ...v, subject: `${v.reg}, Epping Car Buyer`, body: emailBody(v.first_name, v.car, v.price, v.market_target), save: true });
       btn.textContent = 'Sent'; btn.classList.add('success');
-      leads.unshift({ ...v, id: result.lead_id, sentAt: Date.now() });
-      saveLocal(); renderLog();
+      await loadLeads();
       setTimeout(() => { btn.textContent = 'Send email & save lead'; btn.classList.remove('success'); btn.disabled = false; }, 2500);
     } catch (err) {
       btn.textContent = 'Failed'; btn.classList.add('error');
@@ -325,7 +335,7 @@ function formatPrice(val) {
     }
   }
 
-  function removeLead(index) { leads.splice(index, 1); saveLocal(); renderLog(); }
+  function removeLead(index) { leads.splice(index, 1); renderLog(); }
 
   function renderLog() {
     const log = document.getElementById('lead-log');

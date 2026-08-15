@@ -537,6 +537,11 @@ def status():
     update_status(data.get("lead_id"), data.get("status"))
     return jsonify({"ok": True})
 
+@app.route("/api/leads")
+def api_leads():
+    leads = get_all_leads()
+    return jsonify([dict(l) for l in leads])
+
 @app.route("/leads")
 def leads_page():
     return render_template("leads.html", leads=get_all_leads())
