@@ -540,8 +540,11 @@ def debug_facebook_poll():
         url = f"{base}/{FB_PAGE_ID}/leadgen_forms?access_token={FB_PAGE_TOKEN}&limit=10"
         with urllib.request.urlopen(url) as r:
             forms_data = json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        detail = json.loads(e.read().decode())
+        return jsonify({"ok": False, "step": "fetch_forms", "error": str(e), "fb_error": detail, "token_suffix": FB_PAGE_TOKEN[-10:] if FB_PAGE_TOKEN else None})
     except Exception as e:
-        return jsonify({"ok": False, "step": "fetch_forms", "error": str(e)})
+        return jsonify({"ok": False, "step": "fetch_forms", "error": str(e), "token_suffix": FB_PAGE_TOKEN[-10:] if FB_PAGE_TOKEN else None})
 
     forms = forms_data.get("data", [])
     result = {"ok": True, "page_id": FB_PAGE_ID, "forms_found": len(forms), "forms": []}
