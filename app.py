@@ -447,7 +447,7 @@ def poll_facebook_leads():
         return
     base = "https://graph.facebook.com/v19.0"
     try:
-        url = f"{base}/{FB_PAGE_ID}/leadgen_forms?access_token={FB_PAGE_TOKEN}&limit=10"
+        url = f"{base}/me/leadgen_forms?access_token={FB_PAGE_TOKEN}&limit=10"
         with urllib.request.urlopen(url) as r:
             forms = json.loads(r.read()).get("data", [])
     except Exception as e:
@@ -537,7 +537,7 @@ def debug_facebook_poll():
         return jsonify({"ok": False, "error": "FACEBOOK_PAGE_ACCESS_TOKEN not set in Railway"})
     base = "https://graph.facebook.com/v19.0"
     try:
-        url = f"{base}/{FB_PAGE_ID}/leadgen_forms?access_token={FB_PAGE_TOKEN}&limit=10"
+        url = f"{base}/me/leadgen_forms?access_token={FB_PAGE_TOKEN}&limit=10"
         with urllib.request.urlopen(url) as r:
             forms_data = json.loads(r.read())
     except urllib.error.HTTPError as e:
