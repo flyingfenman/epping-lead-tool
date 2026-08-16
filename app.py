@@ -531,6 +531,37 @@ def debug_email():
         result["error_type"] = type(e).__name__
     return jsonify(result)
 
+@app.route("/debug/facebook-poll")
+def debug_facebook_poll():
+    if not FB_PAGE_TOKEN:
+        return jsonify({"ok": False, "error": "FACEBOOK_PAGE_ACCESS_TOKEN not set in Railway"})
+    base = "https://graph.facebook.com/v19.0"
+    try:
+        url = f"{base}/{FB_PAGE_ID}/leadgen_forms?access_token={FB_PAGE_TOKEN}&limit=10"
+        with urllib.request.urlopen(url) as r:
+            forms_data = json.loads(r.read())
+    except Exception as e:
+        return jsonify({"ok": False, "step": "fetch_forms", "error": str(e)})
+
+    forms = forms_data.get("data", [])
+    result = {"ok": True, "page_id": FB_PAGE_ID, "forms_found": len(forms), "forms": []}
+    for form in forms:
+        form_result = {"id": form["id"], "name": form.get("name", ""), "leads": [], "error": None}
+        try:
+            leads_url = f"{base}/{form['id']}/leads?access_token={FB_PAGE_TOKEN}&limit=5&fields=id,field_data,created_time"
+            with urllib.request.urlopen(leads_url) as r:
+                leads_data = json.loads(r.read())
+            for lead in leads_data.get("data", []):
+                _save_fb_lead(lead, form.get("name", ""))
+                form_result["leads"].append({"id": lead["id"], "created_time": lead.get("created_time")})
+        except Exception as e:
+            form_result["error"] = str(e)
+        result["forms"].append(form_result)
+
+    with sqlite3.connect(DB_PATH) as con:
+        result["inbox_count"] = con.execute("SELECT COUNT(*) FROM facebook_leads WHERE dismissed=0").fetchone()[0]
+    return jsonify(result)
+
 def _fb_field(field_data, *keys):
     """Pull the first matching value from Facebook's field_data list."""
     for field in field_data:
