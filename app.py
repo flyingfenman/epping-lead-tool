@@ -36,6 +36,7 @@ DISPLAY_NAME     = os.getenv("DISPLAY_NAME", YOUR_NAME)
 # Zoho Mail SMTP defaults — EU data centre. Change to smtp.zoho.com if the mailbox is on the US data centre.
 SMTP_HOST        = os.getenv("SMTP_HOST", "smtp.zoho.eu")
 SMTP_PORT        = int(os.getenv("SMTP_PORT", "465"))
+RESEND_API_KEY   = os.getenv("RESEND_API_KEY", "")
 TWILIO_SID       = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_TOKEN     = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_FROM      = os.getenv("TWILIO_FROM", "")  # Either a Twilio phone number or your approved alphanumeric sender ID
@@ -318,17 +319,21 @@ def fu2_body(name, car, price, market_target=""):
     return body
 
 def build_html(plain_body):
-    """Build an HTML version of the email body — keeps formatting nice in modern email clients.
-    Ends with the Epping Car Buyer logo as the signature."""
+    import base64
     paragraphs = ""
     for line in plain_body.split("\n"):
         if line.strip():
             paragraphs += f"<p style='margin:0 0 16px 0;'>{line}</p>"
     logo_html = ""
     if os.path.exists(LOGO_PATH):
-        logo_html = ("<img src='cid:brandlogo' width='170' "
-                     "style='width:170px;height:auto;border:0;display:block;margin-top:12px;' "
-                     "alt='Epping Car Buyer' />")
+        try:
+            with open(LOGO_PATH, "rb") as f:
+                logo_b64 = base64.b64encode(f.read()).decode()
+            logo_html = (f"<img src='data:image/jpeg;base64,{logo_b64}' width='170' "
+                         "style='width:170px;height:auto;border:0;display:block;margin-top:12px;' "
+                         "alt='Epping Car Buyer' />")
+        except Exception:
+            pass
     signature = (
         "<div style='margin-top:4px;font-size:14px;line-height:1.55;'>"
         f"<div>{YOUR_NAME}</div>"
@@ -344,31 +349,30 @@ def build_html(plain_body):
 </body></html>"""
 
 def send_email(to_email, subject, plain_body):
-    """Send an email via Zoho Mail SMTP (or any SMTP server configured in .env).
-    The logo travels inside the email itself (inline image), so it shows in
-    Gmail, Outlook and Apple Mail without loading anything external."""
-    if not YOUR_EMAIL or not EMAIL_PASSWORD:
-        raise RuntimeError("EMAIL_ADDRESS and EMAIL_PASSWORD must be set in .env")
+    if not YOUR_EMAIL:
+        raise RuntimeError("EMAIL_ADDRESS must be set")
 
-    msg = MIMEMultipart("related")
+    if RESEND_API_KEY:
+        import resend
+        resend.api_key = RESEND_API_KEY
+        resend.Emails.send({
+            "from": f"{DISPLAY_NAME} <{YOUR_EMAIL}>",
+            "to": [to_email],
+            "subject": subject,
+            "html": build_html(plain_body),
+            "text": plain_body + "\n\n" + SIGNATURE_PLAIN,
+        })
+        return
+
+    if not EMAIL_PASSWORD:
+        raise RuntimeError("EMAIL_PASSWORD must be set (or set RESEND_API_KEY)")
+
+    msg = MIMEMultipart("alternative")
     msg["From"]    = f"{DISPLAY_NAME} <{YOUR_EMAIL}>"
     msg["To"]      = to_email
     msg["Subject"] = subject
-
-    alt = MIMEMultipart("alternative")
-    msg.attach(alt)
-    alt.attach(MIMEText(plain_body + "\n\n" + SIGNATURE_PLAIN, "plain"))
-    alt.attach(MIMEText(build_html(plain_body), "html"))
-
-    if os.path.exists(LOGO_PATH):
-        try:
-            with open(LOGO_PATH, "rb") as f:
-                logo = MIMEImage(f.read())
-            logo.add_header("Content-ID", "<brandlogo>")
-            logo.add_header("Content-Disposition", "inline", filename="ECBlogo.jpg")
-            msg.attach(logo)
-        except Exception:
-            pass  # emails still send fine without the logo
+    msg.attach(MIMEText(plain_body + "\n\n" + SIGNATURE_PLAIN, "plain"))
+    msg.attach(MIMEText(build_html(plain_body), "html"))
 
     context = ssl.create_default_context()
     if SMTP_PORT == 587:
