@@ -74,6 +74,14 @@
 
   <div class="page">
 
+    <div class="card" id="fb-inbox-card" style="display:none; border-color:#1877F2; border-left:4px solid #1877F2;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+        <span class="card-title" style="margin-bottom:0;">Facebook leads</span>
+        <span id="fb-inbox-count" style="font-size:11px; font-weight:600; background:#1877F2; color:#fff; border-radius:20px; padding:2px 10px;"></span>
+      </div>
+      <div id="fb-leads-list"></div>
+    </div>
+
     <div class="card">
       <div class="card-title">New lead</div>
       <div class="grid-3">
@@ -358,6 +366,75 @@ function formatPrice(val) {
 
   generate();
   renderLog();
+
+  // ── Facebook leads inbox ──────────────────────────────────────────────────
+  let fbLeads = [];
+
+  async function loadFacebookLeads() {
+    try {
+      const res = await fetch('/api/facebook-leads');
+      fbLeads = await res.json();
+      renderFbLeads();
+    } catch (e) { /* silently ignore */ }
+  }
+
+  function timeAgo(dateStr) {
+    const d = new Date(dateStr.replace(' ', 'T'));
+    const mins = Math.round((Date.now() - d) / 60000);
+    if (mins < 2) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const h = Math.round(mins / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.round(h / 24) + 'd ago';
+  }
+
+  function renderFbLeads() {
+    const card = document.getElementById('fb-inbox-card');
+    const list = document.getElementById('fb-leads-list');
+    const badge = document.getElementById('fb-inbox-count');
+    if (!fbLeads.length) { card.style.display = 'none'; return; }
+    card.style.display = '';
+    badge.textContent = fbLeads.length + (fbLeads.length === 1 ? ' new lead' : ' new leads');
+    list.innerHTML = fbLeads.map(lead => {
+      const detail = [lead.phone, lead.email, lead.reg].filter(Boolean).join(' · ');
+      return `<div class="lead-row">
+        <div class="lead-info">
+          <strong>${lead.name || 'Unknown'}</strong>${lead.reg ? ` &mdash; ${lead.reg}` : ''}
+          <span>${detail}${detail ? ' &middot; ' : ''}${timeAgo(lead.received_at)}</span>
+        </div>
+        <div class="lead-actions">
+          <button class="action small primary" onclick="loadFbLead(${lead.id})">Load into form</button>
+          <button class="action small" onclick="dismissFbLead(${lead.id},this)">Dismiss</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function loadFbLead(id) {
+    const lead = fbLeads.find(l => l.id === id);
+    if (!lead) return;
+    document.getElementById('name').value = lead.name || '';
+    document.getElementById('lead-email').value = lead.email || '';
+    document.getElementById('phone').value = lead.phone || '';
+    document.getElementById('reg').value = lead.reg || '';
+    document.getElementById('mileage').value = lead.mileage || '';
+    document.getElementById('postcode').value = lead.postcode || '';
+    document.getElementById('car').value = '';
+    document.getElementById('source').value = 'Facebook';
+    generate();
+    document.getElementById('car').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('car').focus();
+  }
+
+  async function dismissFbLead(id, btn) {
+    btn.disabled = true;
+    await fetch(`/api/facebook-leads/${id}/dismiss`, { method: 'POST' });
+    fbLeads = fbLeads.filter(l => l.id !== id);
+    renderFbLeads();
+  }
+
+  loadFacebookLeads();
+  setInterval(loadFacebookLeads, 60000);
 </script>
 </body>
 </html>

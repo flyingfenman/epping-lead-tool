@@ -43,6 +43,7 @@ TWILIO_FROM      = os.getenv("TWILIO_FROM", "")  # Either a Twilio phone number 
 SMS_ENABLED      = os.getenv("SMS_ENABLED", "false").strip().lower() in ("true", "1", "yes", "on")
 FB_VERIFY_TOKEN  = os.getenv("FACEBOOK_VERIFY_TOKEN", "")
 FB_PAGE_TOKEN    = os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN", "")
+FB_PAGE_ID       = os.getenv("FACEBOOK_PAGE_ID", "1134446903093122")
 
 DATA_DIR         = os.getenv("DATA_DIR", os.path.dirname(__file__))
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -105,6 +106,25 @@ def init_db():
             except:
                 pass
 
+        # Facebook leads inbox — raw leads before the user processes them
+        con.execute("""
+            CREATE TABLE IF NOT EXISTS facebook_leads (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                fb_lead_id    TEXT UNIQUE,
+                form_name     TEXT,
+                name          TEXT,
+                phone         TEXT,
+                email         TEXT,
+                reg           TEXT,
+                mileage       TEXT,
+                postcode      TEXT,
+                notes         TEXT,
+                created_time  TEXT,
+                received_at   TEXT DEFAULT (datetime('now','localtime')),
+                dismissed     INTEGER DEFAULT 0
+            )
+        """)
+
         # Templates table — editable email bodies
         con.execute("""
             CREATE TABLE IF NOT EXISTS templates (
@@ -154,6 +174,44 @@ def get_lead(lead_id):
         con.row_factory = sqlite3.Row
         row = con.execute("SELECT * FROM leads WHERE id = ?", (lead_id,)).fetchone()
         return dict(row) if row else None
+
+def _save_fb_lead(lead_data, form_name=""):
+    fb_lead_id = lead_data.get("id")
+    if not fb_lead_id:
+        return
+    fd = lead_data.get("field_data", [])
+    name     = _fb_field(fd, "full_name", "name")
+    email    = _fb_field(fd, "email")
+    phone    = _fb_field(fd, "phone_number", "phone")
+    reg      = _fb_field(fd, "registration", "reg_", "vehicle_reg")
+    mileage  = _fb_field(fd, "mileage")
+    postcode = _fb_field(fd, "post_code", "postcode", "zip")
+    service  = _fb_field(fd, "service_history", "service", "history")
+    notes = f"Service history: {service}" if service else ""
+    try:
+        with sqlite3.connect(DB_PATH) as con:
+            con.execute("""
+                INSERT OR IGNORE INTO facebook_leads
+                (fb_lead_id, form_name, name, phone, email, reg, mileage, postcode, notes, created_time)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (fb_lead_id, form_name, name, phone, email,
+                  reg.upper() if reg else "", mileage, postcode, notes,
+                  lead_data.get("created_time", "")))
+            if con.execute("SELECT changes()").fetchone()[0] > 0:
+                print(f"FB inbox: new lead {name} ({reg})")
+    except Exception as e:
+        print(f"FB inbox save error: {e}")
+
+def get_facebook_inbox():
+    with sqlite3.connect(DB_PATH) as con:
+        con.row_factory = sqlite3.Row
+        return [dict(r) for r in con.execute(
+            "SELECT * FROM facebook_leads WHERE dismissed = 0 ORDER BY received_at DESC"
+        ).fetchall()]
+
+def dismiss_fb_lead_db(fb_id):
+    with sqlite3.connect(DB_PATH) as con:
+        con.execute("UPDATE facebook_leads SET dismissed = 1 WHERE id = ?", (fb_id,))
 
 def delete_lead_db(lead_id):
     with sqlite3.connect(DB_PATH) as con:
@@ -374,6 +432,28 @@ def send_auto_sms(lead):
 
 # ── Scheduler ─────────────────────────────────────────────────────────────────
 
+def poll_facebook_leads():
+    if not FB_PAGE_TOKEN or not FB_PAGE_ID:
+        return
+    base = "https://graph.facebook.com/v19.0"
+    try:
+        url = f"{base}/{FB_PAGE_ID}/leadgen_forms?access_token={FB_PAGE_TOKEN}&limit=10"
+        with urllib.request.urlopen(url) as r:
+            forms = json.loads(r.read()).get("data", [])
+    except Exception as e:
+        print(f"FB poll: forms fetch failed: {e}")
+        return
+    for form in forms:
+        try:
+            leads_url = (f"{base}/{form['id']}/leads"
+                         f"?access_token={FB_PAGE_TOKEN}&limit=25"
+                         f"&fields=id,field_data,created_time")
+            with urllib.request.urlopen(leads_url) as r:
+                for lead in json.loads(r.read()).get("data", []):
+                    _save_fb_lead(lead, form.get("name", ""))
+        except Exception as e:
+            print(f"FB poll: form {form.get('id')} failed: {e}")
+
 def check_followups():
     fu1_due, fu2_due = get_due_followups()
     for lead in fu1_due:
@@ -391,6 +471,7 @@ scheduler = BackgroundScheduler(
     }
 )
 scheduler.add_job(check_followups, "interval", minutes=10, id="check_followups")
+scheduler.add_job(poll_facebook_leads, "interval", minutes=5, id="poll_facebook_leads")
 scheduler.start()
 
 # Startup catch-up disabled — we don't want a flood of pending follow-ups firing
@@ -452,24 +533,7 @@ def facebook_webhook():
                 print(f"FB Graph API error: {e}")
                 continue
 
-            fd = lead_data.get("field_data", [])
-            name     = _fb_field(fd, "full_name", "name")
-            email    = _fb_field(fd, "email")
-            phone    = _fb_field(fd, "phone_number", "phone")
-            reg      = _fb_field(fd, "registration", "reg_", "vehicle_reg")
-            mileage  = _fb_field(fd, "mileage")
-            postcode = _fb_field(fd, "post_code", "postcode", "zip")
-            service  = _fb_field(fd, "service_history", "service", "history")
-
-            data = {
-                "name": name, "email": email, "phone": phone,
-                "car": "", "reg": reg.upper(), "mileage": mileage,
-                "postcode": postcode, "price": "",
-                "source": "Facebook",
-                "notes": f"Service history: {service}" if service else "",
-            }
-            save_lead(data, fu1_at=None, fu2_at=None, sms_at=None)
-            print(f"FB lead saved: {name} ({email}) — {reg}")
+            _save_fb_lead(lead_data, "Facebook Ad")
 
     return "OK", 200
 
@@ -541,6 +605,15 @@ def status():
 def api_leads():
     leads = get_all_leads()
     return jsonify([dict(l) for l in leads])
+
+@app.route("/api/facebook-leads")
+def api_facebook_leads():
+    return jsonify(get_facebook_inbox())
+
+@app.route("/api/facebook-leads/<int:fb_id>/dismiss", methods=["POST"])
+def dismiss_facebook_lead(fb_id):
+    dismiss_fb_lead_db(fb_id)
+    return jsonify({"ok": True})
 
 @app.route("/leads")
 def leads_page():
