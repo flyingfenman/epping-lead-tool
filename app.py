@@ -371,9 +371,15 @@ def send_email(to_email, subject, plain_body):
             pass  # emails still send fine without the logo
 
     context = ssl.create_default_context()
-    with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context) as server:
-        server.login(YOUR_EMAIL, EMAIL_PASSWORD)
-        server.send_message(msg)
+    if SMTP_PORT == 587:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=30) as server:
+            server.starttls(context=context)
+            server.login(YOUR_EMAIL, EMAIL_PASSWORD)
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=30) as server:
+            server.login(YOUR_EMAIL, EMAIL_PASSWORD)
+            server.send_message(msg)
 
 def send_auto_followup(lead, num):
     try:
