@@ -502,6 +502,31 @@ print("─" * 60)
 def health():
     return "OK", 200
 
+@app.route("/debug/email")
+def debug_email():
+    import socket
+    result = {"host": SMTP_HOST, "port": SMTP_PORT, "user": YOUR_EMAIL or "(not set)", "password_set": bool(EMAIL_PASSWORD)}
+    try:
+        context = ssl.create_default_context()
+        if SMTP_PORT == 587:
+            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as server:
+                result["connected"] = True
+                server.starttls(context=context)
+                result["starttls"] = True
+                server.login(YOUR_EMAIL, EMAIL_PASSWORD)
+                result["login"] = True
+        else:
+            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, context=context, timeout=10) as server:
+                result["connected"] = True
+                server.login(YOUR_EMAIL, EMAIL_PASSWORD)
+                result["login"] = True
+        result["ok"] = True
+    except Exception as e:
+        result["ok"] = False
+        result["error"] = str(e)
+        result["error_type"] = type(e).__name__
+    return jsonify(result)
+
 def _fb_field(field_data, *keys):
     """Pull the first matching value from Facebook's field_data list."""
     for field in field_data:
