@@ -606,6 +606,37 @@ def facebook_webhook():
 
     return "OK", 200
 
+@app.route("/webhook/zapier", methods=["POST"])
+def zapier_webhook():
+    """Receive leads from Zapier's Facebook Lead Ads integration."""
+    secret = os.getenv("ZAPIER_SECRET", "")
+    if secret and request.args.get("key") != secret:
+        return "Forbidden", 403
+
+    data = request.get_json(silent=True) or {}
+    name     = data.get("full_name") or data.get("name") or ""
+    email    = data.get("email") or ""
+    phone    = data.get("phone_number") or data.get("phone") or ""
+    reg      = (data.get("registration") or data.get("reg") or "").upper()
+    mileage  = data.get("mileage") or ""
+    postcode = data.get("post_code") or data.get("postcode") or ""
+    service  = data.get("service_history") or ""
+    notes    = f"Service history: {service}" if service else ""
+
+    import hashlib
+    uid = hashlib.md5(f"{name}{email}{phone}{reg}".encode()).hexdigest()
+    try:
+        with sqlite3.connect(DB_PATH) as con:
+            con.execute("""
+                INSERT OR IGNORE INTO facebook_leads
+                (fb_lead_id, form_name, name, phone, email, reg, mileage, postcode, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (f"zapier_{uid}", "Zapier", name, phone, email, reg, mileage, postcode, notes))
+        print(f"Zapier lead: {name} ({email}) — {reg}")
+    except Exception as e:
+        print(f"Zapier lead error: {e}")
+    return jsonify({"ok": True})
+
 @app.route("/")
 def index():
     return render_template("index.html", your_name=YOUR_NAME, your_phone=YOUR_PHONE)
