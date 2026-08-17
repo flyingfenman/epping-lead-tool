@@ -454,15 +454,19 @@ def poll_facebook_leads():
         print(f"FB poll: forms fetch failed: {e}")
         return
     for form in forms:
-        try:
-            leads_url = (f"{base}/{form['id']}/leads"
-                         f"?access_token={FB_PAGE_TOKEN}&limit=25"
-                         f"&fields=id,field_data,created_time")
-            with urllib.request.urlopen(leads_url) as r:
-                for lead in json.loads(r.read()).get("data", []):
+        url = (f"{base}/{form['id']}/leads"
+               f"?access_token={FB_PAGE_TOKEN}&limit=100"
+               f"&fields=id,field_data,created_time")
+        while url:
+            try:
+                with urllib.request.urlopen(url) as r:
+                    data = json.loads(r.read())
+                for lead in data.get("data", []):
                     _save_fb_lead(lead, form.get("name", ""))
-        except Exception as e:
-            print(f"FB poll: form {form.get('id')} failed: {e}")
+                url = data.get("paging", {}).get("next")
+            except Exception as e:
+                print(f"FB poll: form {form.get('id')} failed: {e}")
+                break
 
 def check_followups():
     fu1_due, fu2_due = get_due_followups()
@@ -550,15 +554,18 @@ def debug_facebook_poll():
     result = {"ok": True, "page_id": FB_PAGE_ID, "forms_found": len(forms), "forms": []}
     for form in forms:
         form_result = {"id": form["id"], "name": form.get("name", ""), "leads": [], "error": None}
-        try:
-            leads_url = f"{base}/{form['id']}/leads?access_token={FB_PAGE_TOKEN}&limit=5&fields=id,field_data,created_time"
-            with urllib.request.urlopen(leads_url) as r:
-                leads_data = json.loads(r.read())
-            for lead in leads_data.get("data", []):
-                _save_fb_lead(lead, form.get("name", ""))
-                form_result["leads"].append({"id": lead["id"], "created_time": lead.get("created_time")})
-        except Exception as e:
-            form_result["error"] = str(e)
+        leads_url = f"{base}/{form['id']}/leads?access_token={FB_PAGE_TOKEN}&limit=100&fields=id,field_data,created_time"
+        while leads_url:
+            try:
+                with urllib.request.urlopen(leads_url) as r:
+                    leads_data = json.loads(r.read())
+                for lead in leads_data.get("data", []):
+                    _save_fb_lead(lead, form.get("name", ""))
+                    form_result["leads"].append({"id": lead["id"], "created_time": lead.get("created_time")})
+                leads_url = leads_data.get("paging", {}).get("next")
+            except Exception as e:
+                form_result["error"] = str(e)
+                break
         result["forms"].append(form_result)
 
     with sqlite3.connect(DB_PATH) as con:
