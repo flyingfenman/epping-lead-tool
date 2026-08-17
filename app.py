@@ -207,7 +207,7 @@ def get_facebook_inbox():
     with sqlite3.connect(DB_PATH) as con:
         con.row_factory = sqlite3.Row
         return [dict(r) for r in con.execute(
-            "SELECT * FROM facebook_leads WHERE dismissed = 0 ORDER BY received_at DESC"
+            "SELECT * FROM facebook_leads WHERE dismissed = 0 ORDER BY created_time DESC, received_at DESC"
         ).fetchall()]
 
 def dismiss_fb_lead_db(fb_id):
