@@ -177,8 +177,11 @@
   loadLeads();
 
   function normalisePhone(num) {
-    num = num.replace(/\s+/g, '');
-    if (num.startsWith('07')) return '+44' + num.slice(1);
+    num = (num || '').replace(/[\s\-(). ]/g, '');
+    if (num.startsWith('+4407')) return '+44' + num.slice(4);  // +4407... → +447...
+    if (num.startsWith('4407'))  return '+44' + num.slice(3);  // 4407...  → +447...
+    if (num.startsWith('07'))    return '+44' + num.slice(1);  // 07...    → +447...
+    if (num.startsWith('447'))   return '+' + num;             // 447...   → +447...
     return num;
   }
 

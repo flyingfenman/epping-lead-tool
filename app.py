@@ -183,7 +183,7 @@ def _save_fb_lead(lead_data, form_name=""):
     fd = lead_data.get("field_data", [])
     name     = _fb_field(fd, "full_name", "name")
     email    = _fb_field(fd, "email")
-    phone    = _fb_field(fd, "phone_number", "phone")
+    phone    = normalise_phone(_fb_field(fd, "phone_number", "phone"))
     reg      = _fb_field(fd, "registration", "reg_", "vehicle_reg")
     mileage  = _fb_field(fd, "mileage")
     postcode = _fb_field(fd, "post_code", "postcode", "zip")
@@ -235,6 +235,15 @@ def get_due_followups():
 def set_paused(lead_id, paused):
     with sqlite3.connect(DB_PATH) as con:
         con.execute("UPDATE leads SET paused = ? WHERE id = ?", (1 if paused else 0, lead_id))
+
+def normalise_phone(num):
+    import re
+    num = re.sub(r'[\s\-(). ]', '', str(num or ''))
+    if num.startswith('+4407'): return '+44' + num[4:]   # +4407... → +447...
+    if num.startswith('4407'):  return '+44' + num[3:]   # 4407...  → +447...
+    if num.startswith('07'):    return '+44' + num[1:]   # 07...    → +447...
+    if num.startswith('447'):   return '+' + num         # 447...   → +447...
+    return num
 
 def first_name_of(full_name):
     """Extract the first word of a full name — used so auto-messages say 'Hi Jess' when the DB has 'Jess McLovin'."""
@@ -433,7 +442,7 @@ def send_auto_sms(lead):
             print(f"Auto SMS skipped for lead {lead['id']}: Twilio not configured in .env")
             return
         body = sms_body(first_name_of(lead["name"]), lead["car"], lead["offer"], lead.get("market_target") or "")
-        send_sms(lead["phone"], body)
+        send_sms(normalise_phone(lead["phone"]), body)
         mark_sms(lead["id"])
         print(f"Auto SMS sent to {lead['name']} ({lead['phone']})")
     except Exception as e:
