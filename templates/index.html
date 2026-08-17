@@ -25,7 +25,10 @@
   .header-link { font-size: 13px; color: #555; text-decoration: none; border: 1px solid #E0DDD6; padding: 6px 14px; border-radius: 8px; background: #F5F4F0; }
   .header-link:hover { background: #EEECEA; }
 
-  .page { max-width: 720px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .page { max-width: 1140px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+  .side-by-side { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-items: start; }
+  @media (max-width: 700px) { .side-by-side { grid-template-columns: 1fr; } }
+  .inbox-scroll { max-height: 420px; overflow-y: auto; }
 
   .card { background: #fff; border-radius: 14px; border: 1px solid #E8E6E0; padding: 1.25rem 1.5rem; margin-bottom: 12px; }
   .card-title { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 14px; }
@@ -73,14 +76,6 @@
   </div>
 
   <div class="page">
-
-    <div class="card" id="fb-inbox-card" style="display:none; border-color:#1877F2; border-left:4px solid #1877F2;">
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-        <span class="card-title" style="margin-bottom:0;">Facebook leads</span>
-        <span id="fb-inbox-count" style="font-size:11px; font-weight:600; background:#1877F2; color:#fff; border-radius:20px; padding:2px 10px;"></span>
-      </div>
-      <div id="fb-leads-list"></div>
-    </div>
 
     <div class="card">
       <div class="card-title">New lead</div>
@@ -145,10 +140,19 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="card-title">Follow-ups <span class="auto-badge">auto-scheduled</span></div>
-      <p style="font-size:13px; color:#666; margin-bottom:12px;">SMS fires automatically after 24 hours. Follow-up 1 fires after 2 days. Follow-up 2 fires after 5 days. You can also trigger them manually below.</p>
-      <div id="lead-log"><p class="empty-log">No leads sent yet. Send an initial email above and it will appear here.</p></div>
+    <div class="side-by-side">
+      <div class="card" id="fb-inbox-card" style="border-color:#1877F2; border-left:4px solid #1877F2;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <span class="card-title" style="margin-bottom:0;">Facebook leads</span>
+          <span id="fb-inbox-count" style="font-size:11px; font-weight:600; background:#1877F2; color:#fff; border-radius:20px; padding:2px 10px;"></span>
+        </div>
+        <div id="fb-leads-list" class="inbox-scroll"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Follow-ups <span class="auto-badge">auto-scheduled</span></div>
+        <p style="font-size:13px; color:#666; margin-bottom:12px;">SMS fires automatically after 24 hours. Follow-up 1 fires after 2 days. Follow-up 2 fires after 5 days. You can also trigger them manually below.</p>
+        <div id="lead-log" class="inbox-scroll"><p class="empty-log">No leads sent yet. Send an initial email above and it will appear here.</p></div>
+      </div>
     </div>
 
   </div>
@@ -389,11 +393,13 @@ function formatPrice(val) {
   }
 
   function renderFbLeads() {
-    const card = document.getElementById('fb-inbox-card');
     const list = document.getElementById('fb-leads-list');
     const badge = document.getElementById('fb-inbox-count');
-    if (!fbLeads.length) { card.style.display = 'none'; return; }
-    card.style.display = '';
+    if (!fbLeads.length) {
+      badge.textContent = '';
+      list.innerHTML = '<p class="empty-log">No new Facebook leads.</p>';
+      return;
+    }
     badge.textContent = fbLeads.length + (fbLeads.length === 1 ? ' new lead' : ' new leads');
     list.innerHTML = fbLeads.map(lead => {
       const detail = [lead.phone, lead.email, lead.reg].filter(Boolean).join(' · ');
